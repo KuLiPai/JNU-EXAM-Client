@@ -15,7 +15,6 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:label="@string/app_name"
             android:theme="@style/Theme.期末无挂">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -23,6 +22,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <meta-data
+            android:name="flag"
+            android:value="flag{你好，这里只是无数flag中的一个，感谢使用此app}" />
     </application>
 
 </manifest>

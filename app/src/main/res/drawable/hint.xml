@@ -1,0 +1,34 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:width="500dp"
+    android:height="500dp"
+    android:viewportWidth="500"
+    android:viewportHeight="500"
+    android:name="这个图没问题，隔壁图有问题\n哦好像你不能看到隔壁图\n告诉你其实是本app的图标有问题！！\n没活了，就画个苦力怕吧！"
+    tools:ignore="VectorRaster">
+  <path
+
+      android:pathData="M0,0h500v500h-500z"
+      android:fillColor="#1E1E1E"/>
+  <path
+      android:pathData="M0,0h500v500h-500z"
+      android:fillColor="#4ABF30"/>
+  <path
+      android:pathData="M78,100h100v100h-100z"
+      android:fillColor="#000000"/>
+  <path
+      android:pathData="M307,326h72v85h-72z"
+      android:fillColor="#000000"/>
+  <path
+      android:pathData="M121,326h72v85h-72z"
+      android:fillColor="#000000"/>
+  <path
+      android:pathData="M178,200h144v100h-144z"
+      android:fillColor="#000000"/>
+  <path
+      android:pathData="M121,250h258v100h-258z"
+      android:fillColor="#000000"/>
+  <path
+      android:pathData="M322,100h100v100h-100z"
+      android:fillColor="#000000"/>
+</vector>
