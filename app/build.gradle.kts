@@ -58,18 +58,21 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
-
-
+    //强大的长久存储功能
     implementation(libs.androidx.datastore.preferences)
+    //material图标库，貌似用不太到
     implementation(libs.androidx.material.icons.extended)
-
+    //管理状态栏
     implementation(libs.accompanist.systemuicontroller)
-
+    //非常棒的lottie
     implementation(libs.android.lottie.compose)
-
+    //好像是路由
     implementation(libs.androidx.navigation.compose)
-
+    //波浪加载动画
     implementation(libs.composewaveloading)
+    //老牌http轻量强大完整库
+    implementation(libs.okhttp)
+
 
 
 }

@@ -1,58 +1,125 @@
-// file: MainActivity.kt
 package jnu.kulipai.exam
 
+import android.content.Context
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.animation.*
-import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Image
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DarkMode
-import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ElevatedButton
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LoadingIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedCard
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
-import com.github.compose.waveloading.DrawType
-import com.github.compose.waveloading.WaveLoading
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.setruth.themechange.components.MaskAnimActive
 import com.setruth.themechange.components.MaskBox
 import com.setruth.themechange.model.MaskAnimModel
 import jnu.kulipai.exam.ui.theme.期末无挂Theme
+import jnu.kulipai.exam.util.Api
+import jnu.kulipai.exam.util.FileManager
+import jnu.kulipai.exam.util.FileManager.DirNode
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import java.time.LocalDate
+import kotlin.math.abs
+
+
+val pwd = mutableStateOf("/")
+var loadingState = mutableStateOf(LoadingState.Loading)
+lateinit var appPrefs: AppPreferences
 
 class MainActivity : ComponentActivity() {
 
-    private lateinit var appPrefs: AppPreferences
-
+    @OptIn(DelicateCoroutinesApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -65,42 +132,61 @@ class MainActivity : ComponentActivity() {
 
             if (showWelcomeScreen.value) {
                 WelcomeApp(
+                    //忘了写路由了，只能简单的finish一下，一下子就没有动画了
                     onFinish = {
                         // 当引导流程结束时，更新 SharedPreferences 并切换到主页
                         appPrefs.isFirstLaunch = false
                         showWelcomeScreen.value = false
-                    }
+                    },
+                    appPrefs
                 )
             } else {
-                MainApp()
+                MainApp(appPrefs, this)
             }
         }
+
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (pwd.value != "/") {
+
+                    GlobalScope.launch {
+                        loadingState.value = LoadingState.Step
+                        delay(250)
+                        pwd.value = Api.DotDot(pwd.value)
+                        loadingState.value = LoadingState.Loaded
+                    }
+                } else {
+                    // 放行
+                    isEnabled = false  // 允许默认行为
+                    onBackPressedDispatcher.onBackPressed() // 手动触发默认返回
+                }
+            }
+        })
+
+
     }
 }
 
-// ------------------- 主应用界面 -------------------
 
 @Composable
-fun MainApp() {
-    var isDarkTheme by remember { mutableStateOf(false) }
+fun MainApp(appPrefs: AppPreferences, context: Context) {
+
+    var isDarkTheme by remember { mutableStateOf(appPrefs.isNight) }
     var isAnimating by remember { mutableStateOf(false) }
     var pendingThemeChange by remember { mutableStateOf<Boolean?>(null) }
     val systemUiController = rememberSystemUiController()
-    val initialDarkTheme = isSystemInDarkTheme()
-
-    LaunchedEffect(Unit) {
-        isDarkTheme = initialDarkTheme
-    }
 
     LaunchedEffect(isDarkTheme) {
         systemUiController.setSystemBarsColor(color = Color.Transparent, darkIcons = !isDarkTheme)
     }
 
+    //mask的动画很强，贵州kug的人就是强
     MaskBox(
-        animTime = 1000L,
+        animTime = 1500L,
         maskComplete = {
             pendingThemeChange?.let { newTheme ->
                 isDarkTheme = newTheme
+                appPrefs.isNight = isDarkTheme
                 pendingThemeChange = null
             }
         },
@@ -108,10 +194,12 @@ fun MainApp() {
             isAnimating = false
         }
     ) { maskAnimActiveEvent ->
+        //有点无语，中文名，但是自动生成的懒得改
         期末无挂Theme(darkTheme = isDarkTheme) {
             MainScaffold(
                 isDarkTheme = isDarkTheme,
                 isAnimating = isAnimating,
+                context = context,
                 onThemeToggle = { animModel, x, y ->
                     if (!isAnimating) {
                         isAnimating = true
@@ -124,16 +212,54 @@ fun MainApp() {
     }
 }
 
+
+//非常棒的Material 3 Experiment
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScaffold(isDarkTheme: Boolean, isAnimating: Boolean, onThemeToggle: MaskAnimActive) {
+fun MainScaffold(
+    isDarkTheme: Boolean,
+    isAnimating: Boolean,
+    onThemeToggle: MaskAnimActive,
+    context: Context
+) {
+
+
+//    //pwd没错就是pwd
+//    var pwd = remember { mutableStateOf("/") }
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
             key(isDarkTheme) {
                 TopAppBar(
-                    title = { Text("期末无挂") },
+                    title = {
+                        Text(
+
+                            if (pwd.value == "/") "期末无挂" else if (pwd.value.length >= 8) ".." + pwd.value.substring(
+                                pwd.value.length - 8
+                            ) else pwd.value,
+                            modifier = Modifier.animateContentSize(),
+                        )
+                    },
+                    navigationIcon = {
+                        if (pwd.value != "/") {
+                            Icon(
+                                modifier = Modifier.padding(16.dp, 0.dp, 4.dp, 0.dp),
+                                painter = painterResource(R.drawable.folder_open_24px),
+                                contentDescription = null
+                            )
+                        } else {
+                            Icon(
+                                modifier = Modifier.padding(16.dp, 0.dp, 4.dp, 0.dp),
+                                painter = painterResource(R.drawable.biglogo),
+                                contentDescription = null
+                            )
+                        }
+
+                    },
                     actions = {
+                        //别忘了路径过程隐藏一些按钮，
+                        //好吧忘了，不对懒了
                         ThemeToggleButton(
                             isDarkTheme = isDarkTheme,
                             isAnimating = isAnimating,
@@ -153,11 +279,10 @@ fun MainScaffold(isDarkTheme: Boolean, isAnimating: Boolean, onThemeToggle: Mask
             }
         }
     ) { innerPadding ->
-        MainContent(modifier = Modifier.padding(innerPadding))
+        MainContent(modifier = Modifier.padding(innerPadding), pwd, context)
     }
 }
 
-// ... MainContent 和 ThemeToggleButton 等 Composable 保持不变 ...
 @Composable
 fun ThemeToggleButton(
     isDarkTheme: Boolean,
@@ -181,415 +306,675 @@ fun ThemeToggleButton(
     ) {
         Icon(
             imageVector = if (isDarkTheme) Icons.Default.DarkMode else Icons.Default.LightMode,
-            contentDescription = if (isDarkTheme) "切换到亮色模式" else "切换到暗色模式",
+            contentDescription = if (isDarkTheme) "切换到亮色模式" else "切换到暗色模式",//一眼ai，但是写的好
             tint = MaterialTheme.colorScheme.onSurface
         )
     }
 }
 
-enum class LoadingState { Loading, Loaded }
+enum class LoadingState { Loading, Loaded, Step }
+
+lateinit var root: DirNode
 
 @Composable
-fun MainContent(modifier: Modifier = Modifier) {
-    var loadingState by remember { mutableStateOf(LoadingState.Loading) }
+fun MainContent(modifier: Modifier = Modifier, pwd: MutableState<String>, context: Context) {
+
     val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.app_list_loading))
     val progress by animateLottieCompositionAsState(
         composition = composition,
-        isPlaying = loadingState == LoadingState.Loading,
+        isPlaying = loadingState.value == LoadingState.Loading,
         iterations = LottieConstants.IterateForever,
-        speed = 1f
+        speed = 1f,
     )
 
     LaunchedEffect(Unit) {
-        delay(3000)
-        loadingState = LoadingState.Loaded
+        if (FileManager.exists(context, "cache.json")) {
+            val json = FileManager.read(context, "cache.json")
+            root = FileManager.buildDirectoryTree(json.toString())
+            loadingState.value = LoadingState.Loaded
+        } else {
+
+            try {
+                if (appPre.Repo == "gitee") {
+                    val json =
+                        Api.performGetRequest("https://raw.githubusercontent.com/gubaiovo/JNU-EXAM/main/directory_structure.json")
+                    if (json != "err") {
+                        FileManager.write(context, "cache.json", json)
+                        root = FileManager.buildDirectoryTree(json)
+                        loadingState.value = LoadingState.Loaded
+                    } else {
+                        Toast.makeText(context, "超时力~", Toast.LENGTH_SHORT).show()
+                    }
+                } else if (appPre.Repo == "github") {
+                    val json =
+                        Api.performGetRequest("https://gitee.com/gubaiovo/jnu-exam/raw/main/directory_structure.json")
+                    if (json != "err") {
+                        FileManager.write(context, "cache.json", json)
+                        root = FileManager.buildDirectoryTree(json)
+                        loadingState.value = LoadingState.Loaded
+                    } else {
+                        Toast.makeText(context, "超时力~", Toast.LENGTH_SHORT).show()
+                    }
+
+                }
+            } catch (e: Exception) {
+
+            }
+
+
+        }
+
     }
 
-    Column(
+
+    Box(
         modifier = modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .fillMaxSize(),
     ) {
         AnimatedVisibility(
-            visible = loadingState == LoadingState.Loading,
-            enter = fadeIn(animationSpec = tween(durationMillis = 200)),
+            visible = loadingState.value == LoadingState.Loading,
+            enter = fadeIn(animationSpec = tween(durationMillis = 100)),
             exit = fadeOut(animationSpec = tween(durationMillis = 200)),
         ) {
+
             LottieAnimation(composition = composition, progress = { progress })
+
         }
 
         AnimatedVisibility(
-            visible = loadingState == LoadingState.Loaded,
-            enter = fadeIn(animationSpec = tween(durationMillis = 50)),
-            exit = fadeOut(animationSpec = tween(durationMillis = 200))
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-                modifier = Modifier.fillMaxSize()
+            visible = loadingState.value == LoadingState.Loaded,
+            enter = fadeIn(animationSpec = tween(durationMillis = 400)),
+            exit = fadeOut(animationSpec = tween(durationMillis = 200)),
+
+
             ) {
-                Text(text = "数据已加载完成！", modifier = Modifier.padding(16.dp))
-                Button(onClick = { /* Do something */ }) {
-                    Text("点击这里")
+
+
+            lateinit var newdata: List<Any>
+
+
+
+            if (pwd.value != "/") {
+                val targetContent = FileManager.getDirContent(root, pwd.value)
+                targetContent?.let {
+                    newdata = listOf(
+                        DirNode(
+                            name = "..",
+                            path = "",
+                        )
+                    ) + it.subDirs + it.files
+                }
+            } else {
+                val targetContent = FileManager.getDirContent(root, pwd.value)
+                targetContent?.let {
+                    newdata = it.subDirs + it.files
                 }
             }
+
+            Box {
+                LazyColumn(
+                    modifier = Modifier.animateContentSize(),
+                ) {
+                    items(newdata) { item ->
+                        if (item is DirNode) {
+                            FolderCard(name = item.name, pwd, loadingState)
+                        } else if (item is FileManager.FileItem) {
+                            FileCard(item)
+                        }
+
+                    }
+                }
+                if (appPrefs.Day != LocalDate.now().dayOfMonth) {
+                    BounceUpButton(context)
+                }
+            }
+
         }
     }
 }
 
-// ------------------- 欢迎与引导流程 -------------------
 
-// 为 WelcomeApp 添加 onFinish 回调
+@OptIn(DelicateCoroutinesApi::class)
 @Composable
-fun WelcomeApp(onFinish: () -> Unit) {
-    val isSystemDark = isSystemInDarkTheme()
-    var isDarkTheme by remember { mutableStateOf(isSystemDark) }
-    val systemUiController = rememberSystemUiController()
+fun FolderCard(
+    name: String = "[object Object]",
+    pwd: MutableState<String>,
+    loadingState: MutableState<LoadingState>
+) {
+    Card(
+        onClick = {
+            if (name == "..") {
+                GlobalScope.launch {
+                    loadingState.value = LoadingState.Step
+                    delay(250)
+                    pwd.value = Api.DotDot(pwd.value)
+                    loadingState.value = LoadingState.Loaded
+                }
+            } else {
 
-    LaunchedEffect(isDarkTheme) {
-        systemUiController.setSystemBarsColor(color = Color.Transparent, darkIcons = !isDarkTheme)
-    }
+                GlobalScope.launch {
+                    loadingState.value = LoadingState.Step
+                    delay(250)
+                    pwd.value += "$name/"
+                    loadingState.value = LoadingState.Loaded
+                }
 
-    期末无挂Theme(darkTheme = isDarkTheme) {
-        NavigationApp(onFinish = onFinish) // 将回调传递下去
-    }
-}
+            }
 
-// 页面路由定义
-sealed class Screen(val route: String) {
-    object One : Screen("one_screen")
-    object Two : Screen("two_screen")
-    object Three : Screen("three_screen")
-}
-
-// 动画参数
-private const val ANIMATION_DURATION = 400
-private val smoothEasing = FastOutSlowInEasing
-
-// 为 NavigationApp 添加 onFinish 回调
-@OptIn(ExperimentalAnimationApi::class)
-@Composable
-fun NavigationApp(onFinish: () -> Unit) {
-    val navController = rememberNavController()
-
-    NavHost(
-        navController = navController,
-        startDestination = Screen.One.route,
-        enterTransition = { slideIntoContainer(towards = AnimatedContentTransitionScope.SlideDirection.Start, animationSpec = tween(durationMillis = ANIMATION_DURATION, easing = smoothEasing)) },
-        exitTransition = { slideOutOfContainer(towards = AnimatedContentTransitionScope.SlideDirection.Start, animationSpec = tween(durationMillis = ANIMATION_DURATION, easing = smoothEasing)) },
-        popEnterTransition = { slideIntoContainer(towards = AnimatedContentTransitionScope.SlideDirection.End, animationSpec = tween(durationMillis = ANIMATION_DURATION, easing = smoothEasing)) },
-        popExitTransition = { slideOutOfContainer(towards = AnimatedContentTransitionScope.SlideDirection.End, animationSpec = tween(durationMillis = ANIMATION_DURATION, easing = smoothEasing)) }
-    ) {
-        composable(route = Screen.One.route) { OneScreen(navController = navController) }
-        composable(route = Screen.Two.route) { TwoScreen(navController = navController) }
-        composable(route = Screen.Three.route) {
-            // 将 onFinish 回调传递给最终页面
-            ThreeScreen(onFinish = onFinish)
-        }
-    }
-}
-
-// 页面 Composable
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-fun OneScreen(navController: NavController) {
-    // ... OneScreen 的代码保持不变 ...
-    Column(
+        },
+        shape = CircleShape,
         modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xfff9f9ff)),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+            .fillMaxWidth()
+            .padding(24.dp, 6.dp),
+        elevation = CardDefaults.elevatedCardElevation(
+            defaultElevation = 0.dp
+        )
     ) {
-        Box {
-            Text(
-                "Welcome To\n期末无挂",
-                style = MaterialTheme.typography.displayMedium,
-                lineHeight = 64.sp,
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(24.dp, 88.dp, 0.dp, 0.dp)
+        Row(
+            modifier = Modifier.padding(24.dp, 24.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+
+            Icon(
+                painter = painterResource(R.drawable.folder_24px),
+                tint = MaterialTheme.colorScheme.onSurface,
+                contentDescription = null
             )
-            WaveLoading(progress = 0.6f, backDrawType = DrawType.None) {
-                Image(
-                    painter = painterResource(id = R.drawable.logo),
-                    contentDescription = "",
-                    modifier = Modifier.scale(1.3f)
+            Text(
+                name,
+                modifier = Modifier.padding(12.dp, 0.dp),
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    fontWeight = FontWeight.Bold
                 )
-            }
-            FloatingActionButton(
-                containerColor = Color(0xffd6e3ff),
-                contentColor = Color(0xff284777),
+            )
+        }
+    }
+}
+
+enum class DownLoadState { DownLoading, Downloaded, Err, None }
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun FileCard(item: FileManager.FileItem) {
+
+    var downloadState by remember { mutableStateOf(DownLoadState.None) }
+    var expanded by remember { mutableStateOf(false) }
+    item.name.substringAfterLast(".")
+
+    // 根据rotated状态，目标角度为0或180度，动画时长300毫秒
+    val angle by animateFloatAsState(
+        targetValue = if (expanded) 180f else 0f,
+        animationSpec = tween(durationMillis = 300)
+    )
+
+    OutlinedCard(
+        modifier = Modifier
+            .animateContentSize()
+            .fillMaxWidth()
+            .padding(24.dp, 6.dp),
+        onClick = { expanded = !expanded },
+
+        shape = RoundedCornerShape(24.dp),
+
+        ) {
+        Column {
+            Row(
                 modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(0.dp, 0.dp, 0.dp, 64.dp),
-                onClick = { navController.navigate(Screen.Two.route) }
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    LoadingIndicator(
-                        color = Color(0xff284777),
-                        modifier = Modifier.size(24.dp),
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Next")
-                }
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-fun TwoScreen(navController: NavController) {
-    // ... TwoScreen 的代码保持不变 ...
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xffeee2bc))
-    ) {
-        val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.lib_reference_summer))
-        val progress by animateLottieCompositionAsState(
-            composition = composition,
-            iterations = LottieConstants.IterateForever
-        )
-        LottieAnimation(
-            modifier = Modifier
-                .size(352.dp)
-                .align(Alignment.Center)
-                .offset(0.dp, -128.dp),
-            composition = composition,
-            progress = { progress },
-        )
-        Text(
-            "不挂科",
-            modifier = Modifier
-                .align(Alignment.Center)
-                .offset(0.dp, 88.dp),
-            style = MaterialTheme.typography.displayMedium.copy(color = Color(0xff4e472a)),
-        )
-        Text(
-            "过过过过过过过过过",
-            modifier = Modifier
-                .align(Alignment.Center)
-                .offset(0.dp, 144.dp)
-                .padding(32.dp),
-            style = MaterialTheme.typography.displaySmall.copy(color = Color(0xff817C7C)),
-        )
-        FloatingActionButton(
-            contentColor = Color(0xff534600),
-            containerColor = Color(0xfff8e287),
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(0.dp, 0.dp, 0.dp, 64.dp),
-            onClick = { navController.navigate(Screen.Three.route) }
-        ) {
-            Row(
-                modifier = Modifier.padding(16.dp),
+                    .fillMaxWidth()
+                    .padding(24.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                LoadingIndicator(color = Color(0xff534600), modifier = Modifier.size(24.dp))
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Next")
+                Icon(
+                    painter = painterResource(R.drawable.file_24px),
+                    tint = MaterialTheme.colorScheme.onSurface,
+                    contentDescription = null
+                )
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                Column(
+                    modifier = Modifier.weight(1f) // 占满剩余空间
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = item.name,
+                            modifier = Modifier.weight(1f),
+                            style = MaterialTheme.typography.bodyLarge.copy(
+                                fontWeight = FontWeight.Bold
+                            ),
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Icon(
+                            modifier = Modifier.rotate(angle),
+                            painter = painterResource(R.drawable.keyboard_arrow_down_24px),
+                            contentDescription = null
+                        )
+                    }
+                }
             }
+
+
+            if (expanded) {
+                HorizontalDivider(modifier = Modifier.padding(24.dp, 0.dp))
+                Column(
+                    modifier = Modifier.padding(24.dp, 16.dp)
+                ) {
+                    Row {
+                        Text("路径: ")
+                        Text(item.path)
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("大小: ${Api.formatFileSize(item.size)}")
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("直链: ")
+                        CopyableTextWithShape("Github", item.github_raw_url)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        CopyableTextWithShape(
+                            "Gitee", item.gitee_raw_url
+                        )
+//                        CopyableTextWithShape(
+//                            if(appPre.Repo=="github")item.github_raw_url.toString()else item.gitee_raw_url,
+//                            backgroundColor = MaterialTheme.colorScheme.primary
+//                        )
+                    }
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(0.dp, 16.dp, 0.dp, 0.dp),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        ElevatedButton(
+                            onClick = {
+
+                            },
+                            contentPadding = PaddingValues(
+                                start = 16.dp,
+                                top = 6.dp,
+                                end = 16.dp,
+                                bottom = 6.dp
+                            )
+
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.visibility_24px),
+                                contentDescription = null
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("预览")
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Button(//暂时的下载
+                            onClick = {
+                                downloadState = DownLoadState.DownLoading
+                            },
+                            contentPadding = PaddingValues(
+                                start = 16.dp,
+                                top = 6.dp,
+                                end = 16.dp,
+                                bottom = 6.dp
+                            )
+                        ) {
+
+                            if (downloadState == DownLoadState.None) {
+                                Icon(
+                                    painter = painterResource(R.drawable.download_24px),
+                                    contentDescription = null
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("下载")
+                            } else if (downloadState == DownLoadState.DownLoading) {
+                                LoadingIndicator(
+                                    color = MaterialTheme.colorScheme.onPrimary,
+                                    modifier = Modifier
+                                        .width(24.dp)
+                                        .height(24.dp),
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("下载中")
+                            }
+
+
+                        }
+                    }
+                }
+
+            }
+
+
         }
     }
 }
 
-// 为 ThreeScreen 添加 onFinish 回调
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-fun ThreeScreen(onFinish: () -> Unit) {
-    Box(
 
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xffffede8)), // 淡橙色背景
+////stackoverflow 好用！！
+interface TextShapeCorners {
+    fun calculateRadius(density: Density, textStyle: TextStyle): Float
 
-    ) {
-
-
-        val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.lib_detail_rocket))
-        val progress by animateLottieCompositionAsState(
-            composition = composition,
-            iterations = LottieConstants.IterateForever,
-            speed = 1f
-        )
-
-        LottieAnimation(
-            modifier = Modifier
-                .width(352.dp)
-                .height(352.dp)
-                .align(Alignment.Center)
-                .offset(0.dp, -128.dp),
-            composition = composition,
-            progress = { progress },
-        )
-
-
-        Text(
-            "请选择仓库",
-            modifier = Modifier
-                .align(Alignment.Center)
-                .offset(0.dp, 64.dp),
-            style = MaterialTheme.typography.displayMedium.copy(
-                color = Color(0xff5d4037)
-            ),
-        )
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.Center)
-                .padding(64.dp)
-                .offset(0.dp, 136.dp),
-        ) {
-            Column(
-                modifier = Modifier.align(Alignment.TopStart),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-
-                var selected by remember { mutableStateOf(false) }
-
-                FilterChip(
-                    onClick = { selected = !selected },
-                    label = {
-                        Text("Gitee")
-                    },
-                    selected = selected,
-                    leadingIcon = if (selected) {
-                        {
-                            Icon(
-                                imageVector = Icons.Filled.Done,
-                                contentDescription = "Done icon",
-                                modifier = Modifier.size(FilterChipDefaults.IconSize)
-                            )
-                        }
-                    } else {
-                        {
-
-                            Icon(
-                                painter = painterResource(id = R.drawable.gitee_svgrepo_com),
-                                tint = Color(0xff5d4037),
-                                contentDescription = "Done icon",
-                                modifier = Modifier.size(FilterChipDefaults.IconSize)
-                            )
-                        }
-
-
-                    },
-                )
-
-                Row(
-                    modifier = Modifier.padding(0.dp, 8.dp, 0.dp, 0.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(12.dp)
-                            .background(
-                                color = Color.Cyan, shape = CircleShape
-                            )
-                    )
-
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        "999ms",
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            color = Color(0xff8f4c38)
-                        )
-                    )
-                }
-
-
+    data class Fixed(private val radius: Dp) : TextShapeCorners {
+        override fun calculateRadius(density: Density, textStyle: TextStyle): Float =
+            with(density) {
+                radius.toPx()
             }
+    }
 
-
-            Column(
-                modifier = Modifier.align(Alignment.TopEnd),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-
-                var selected by remember { mutableStateOf(false) }
-
-                FilterChip(
-                    onClick = { selected = !selected },
-                    label = {
-                        Text("Github")
-                    },
-                    selected = selected,
-                    leadingIcon = if (selected) {
-                        {
-                            Icon(
-                                imageVector = Icons.Filled.Done,
-                                contentDescription = "Done icon",
-                                modifier = Modifier.size(FilterChipDefaults.IconSize)
-                            )
-                        }
-                    } else {
-                        {
-                            Icon(
-                                painter = painterResource(id = R.drawable.github_142_svgrepo_com),
-                                tint = Color(0xff5d4037),
-                                contentDescription = "Done icon",
-                                modifier = Modifier.size(FilterChipDefaults.IconSize)
-                            )
-                        }
-                    },
-                )
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(0.dp, 8.dp, 0.dp, 0.dp),
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(12.dp)
-                            .background(color = Color.Green, shape = CircleShape)
-                    )
-
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        "111ms",
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            color = Color(0xff8f4c38)
-                        )
-                    )
-                }
-
+    data class Flexible(
+        private val fraction: Float = 0.45f
+    ) : TextShapeCorners {
+        override fun calculateRadius(density: Density, textStyle: TextStyle): Float =
+            with(density) {
+                textStyle.lineHeight.toPx() * fraction
             }
+    }
+}
 
+interface TextShapePadding {
+    fun calculatePadding(density: Density, textStyle: TextStyle): Float
+
+    data class Fixed(private val padding: Dp) : TextShapePadding {
+        override fun calculatePadding(density: Density, textStyle: TextStyle): Float =
+            with(density) {
+                padding.toPx()
+            }
+    }
+
+    object Flexible : TextShapePadding {
+        override fun calculatePadding(density: Density, textStyle: TextStyle): Float =
+            with(density) {
+                textStyle.lineHeight.toPx() - textStyle.fontSize.toPx()
+            }
+    }
+}
+
+fun TextLayoutResult.getLineRect(lineIndex: Int): Rect {
+    return Rect(
+        left = getLineLeft(lineIndex),
+        top = getLineTop(lineIndex),
+        right = getLineRight(lineIndex),
+        bottom = getLineBottom(lineIndex)
+    )
+}
+
+fun Rect.addHorizontalPadding(padding: Float): Rect {
+    return Rect(left - padding, top, right + padding, bottom)
+}
+
+class TextShape(
+    private val textLayoutResult: TextLayoutResult,
+    private val padding: TextShapePadding = TextShapePadding.Flexible,
+    private val corners: TextShapeCorners = TextShapeCorners.Flexible()
+) : Shape {
+
+    override fun createOutline(
+        size: Size,
+        layoutDirection: LayoutDirection,
+        density: Density
+    ): Outline {
+        val lineCount = textLayoutResult.lineCount
+        val textStyle = textLayoutResult.layoutInput.style
+        val lineHeight = with(density) { textStyle.lineHeight.toPx() }
+
+        val lineRects = mutableMapOf<Int, Rect>()
+
+        val paddingPx = padding.calculatePadding(density, textStyle)
+        val curveRadiusPx =
+            corners.calculateRadius(density, textStyle).coerceIn(0f, lineHeight / 2)
+
+        val path = Path()
+
+        // Step 1: Draw top line and top corners
+        var previousLine: Rect = lineRects.getOrPut(0) {
+            textLayoutResult.getLineRect(0).addHorizontalPadding(paddingPx)
+        }
+        path.moveTo(previousLine.left, previousLine.top + curveRadiusPx)
+        path.quadraticBezierTo(
+            x1 = previousLine.left, y1 = previousLine.top,
+            x2 = previousLine.left + curveRadiusPx, y2 = previousLine.top
+        )
+        path.lineTo(previousLine.right - curveRadiusPx, previousLine.top)
+        path.quadraticBezierTo(
+            x1 = previousLine.right, y1 = previousLine.top,
+            x2 = previousLine.right, y2 = previousLine.top + curveRadiusPx
+        )
+        path.lineTo(previousLine.right, previousLine.bottom - curveRadiusPx)
+
+        // Step 2: Draw right sides of lines
+        for (i in 1 until lineCount) {
+            val currentLine = lineRects.getOrPut(i) {
+                textLayoutResult.getLineRect(i).addHorizontalPadding(paddingPx)
+            }
+            if (abs(currentLine.right - previousLine.right) > curveRadiusPx) {
+                val normalizedCurveRadius =
+                    if (currentLine.right > previousLine.right) curveRadiusPx else -curveRadiusPx
+                path.quadraticBezierTo(
+                    x1 = previousLine.right, y1 = previousLine.bottom,
+                    x2 = previousLine.right + normalizedCurveRadius, y2 = currentLine.top
+                )
+                path.lineTo(currentLine.right - normalizedCurveRadius, currentLine.top)
+                path.quadraticBezierTo(
+                    x1 = currentLine.right, y1 = currentLine.top,
+                    x2 = currentLine.right, y2 = currentLine.top + curveRadiusPx
+                )
+            } else {
+                path.cubicTo(
+                    x1 = previousLine.right, y1 = previousLine.bottom,
+                    x2 = currentLine.right, y2 = currentLine.top,
+                    x3 = currentLine.right, y3 = currentLine.top + curveRadiusPx
+                )
+            }
+            path.lineTo(currentLine.right, currentLine.bottom - curveRadiusPx)
+            previousLine = currentLine
         }
 
+        // Step 3: Draw bottom line and bottom corners
+        path.quadraticBezierTo(
+            x1 = previousLine.right, y1 = previousLine.bottom,
+            x2 = previousLine.right - curveRadiusPx, y2 = previousLine.bottom
+        )
+        path.lineTo(previousLine.left + curveRadiusPx, previousLine.bottom)
+        path.quadraticBezierTo(
+            x1 = previousLine.left, y1 = previousLine.bottom,
+            x2 = previousLine.left, y2 = previousLine.bottom - curveRadiusPx
+        )
+        path.lineTo(previousLine.left, previousLine.top + curveRadiusPx)
 
+        // Step 4: Draw left sides of lines in reverse order
+        for (i in lineCount - 2 downTo 0) {
+            val currentLine = lineRects.getOrPut(i) {
+                textLayoutResult.getLineRect(i).addHorizontalPadding(paddingPx)
+            }
+            if (abs(previousLine.left - currentLine.left) > curveRadiusPx) {
+                val normalizedCurveRadius =
+                    if (previousLine.left > currentLine.left) -curveRadiusPx else curveRadiusPx
+                path.quadraticBezierTo(
+                    x1 = previousLine.left, y1 = previousLine.top,
+                    x2 = previousLine.left + normalizedCurveRadius, y2 = currentLine.bottom
+                )
+                path.lineTo(currentLine.left - normalizedCurveRadius, currentLine.bottom)
+                path.quadraticBezierTo(
+                    x1 = currentLine.left, y1 = currentLine.bottom,
+                    x2 = currentLine.left, y2 = currentLine.bottom - curveRadiusPx
+                )
+            } else {
+                path.cubicTo(
+                    x1 = previousLine.left, y1 = previousLine.top,
+                    x2 = currentLine.left, y2 = currentLine.bottom,
+                    x3 = currentLine.left, y3 = currentLine.bottom - curveRadiusPx
+                )
+            }
+            path.lineTo(currentLine.left, currentLine.top + curveRadiusPx)
+            previousLine = currentLine
+        }
+
+        path.close()
+
+        return Outline.Generic(path)
+    }
+}
+
+// 自己封装
+@Composable
+fun CopyableTextWithShape(
+    text: String,
+    copy: String,
+    modifier: Modifier = Modifier,
+    backgroundColor: Color = MaterialTheme.colorScheme.primary,
+) {
+    var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
+    val textShape by remember {
+        derivedStateOf {
+            textLayoutResult?.let {
+                TextShape(
+                    textLayoutResult = it,
+                    padding = TextShapePadding.Fixed(4.dp), // <-- 指定较小 padding
+                    corners = TextShapeCorners.Flexible(0.45f)
+                )
+            }
+        }
+    }
+
+
+    var isPressed by remember { mutableStateOf(false) }
+    val backgroundAlpha by animateFloatAsState(
+        targetValue = if (isPressed) 0.4f else 0f,
+        label = "BackgroundAlpha"
+    )
+
+    val clipboardManager = LocalClipboardManager.current
+    val context = LocalContext.current
+
+    Text(
+        text = text,
+        modifier = modifier
+            .pointerInput(text) {
+                detectTapGestures(
+                    onPress = {
+                        isPressed = true
+                        val released = try {
+                            awaitRelease()
+                            true
+                        } catch (e: Exception) {
+                            false
+                        }
+                        // 延迟让按压效果显得更自然
+                        if (released) {
+                            delay(350)
+                        }
+                        isPressed = false
+                    },
+                    onTap = {
+                        clipboardManager.setText(AnnotatedString(copy))
+                        Toast.makeText(context, "已复制文本", Toast.LENGTH_SHORT).show()
+                    }
+                )
+            }
+            .then(
+                textShape?.let {
+                    Modifier
+                        .background(backgroundColor.copy(alpha = backgroundAlpha), it)
+//                        .border(0.72.dp, backgroundColor.copy(alpha = borderAlpha), it)
+                } ?: Modifier
+            )
+            .padding(horizontal = 0.dp, vertical = 0.dp),
+        style = MaterialTheme.typography.bodyLarge.copy(
+            fontWeight = FontWeight.Bold
+        ),
+        onTextLayout = { textLayoutResult = it }
+    )
+}
+
+@OptIn(DelicateCoroutinesApi::class)
+@Composable
+fun BounceUpButton(context: Context) {
+    val configuration = LocalConfiguration.current
+    val density = LocalDensity.current
+    val screenHeightPx = with(density) { configuration.screenHeightDp.dp.roundToPx() }
+
+    val offsetY = remember { Animatable(screenHeightPx.toFloat()) }
+    val scope = rememberCoroutineScope()
+
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.BottomCenter
+    ) {
         FloatingActionButton(
-            contentColor = Color(0xff723523),
-            containerColor = Color(0xffffdbd1),
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(0.dp, 0.dp, 0.dp, 64.dp),
             onClick = {
-                onFinish() // 调用回调，切换到主界面
-            }
+//                loadingState.value = LoadingState.Loading
+                scope.launch {
+                    offsetY.animateTo(
+                        targetValue = screenHeightPx.toFloat(),
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessLow
+                        )
+                    )
+                }
+
+                appPrefs.Day = LocalDate.now().dayOfMonth
+
+//                GlobalScope.launch {
+//                    //http
+//                    try {
+//                        if (appPre.Repo == "gitee") {
+//                            val json =
+//                                Api.performGetRequest("https://raw.githubusercontent.com/gubaiovo/JNU-EXAM/main/directory_structure.json")
+//                            if (json != "err") {
+//                                FileManager.write(context, "cache.json", json)
+//                                root = FileManager.buildDirectoryTree(json)
+//                                loadingState.value = LoadingState.Loaded
+//                            } else {
+//                                Toast.makeText(context, "超时力~", Toast.LENGTH_SHORT).show()
+//                            }
+//                        } else if (appPre.Repo == "github") {
+//                            val json =
+//                                Api.performGetRequest("https://gitee.com/gubaiovo/jnu-exam/raw/main/directory_structure.json")
+//                            if (json != "err") {
+//                                FileManager.write(context, "cache.json", json)
+//                                root = FileManager.buildDirectoryTree(json)
+//                                loadingState.value = LoadingState.Loaded
+//                            } else {
+//                                Toast.makeText(context, "超时力~", Toast.LENGTH_SHORT).show()
+//                            }
+//
+//                        }
+//                    } catch (e: Exception) {
+//                    }
+//                }
+
+            },// 点击更新
+            modifier = Modifier.offset { IntOffset(0, offsetY.value.toInt()) }
         ) {
             Row(
                 modifier = Modifier.padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                LoadingIndicator(
-                    color = Color(0xff723523),
-                    modifier = Modifier
-                        .width(24.dp)
-                        .height(24.dp),
+                Icon(
+                    painter = painterResource(R.drawable.notifications_24px),
+                    contentDescription = null
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Welcome")
+                Text("Update")
             }
         }
     }
+
+    LaunchedEffect(Unit) {
+        val targetOffsetPx = screenHeightPx - with(density) { 924.dp.roundToPx() }
+        offsetY.animateTo(
+            targetValue = targetOffsetPx.toFloat(),
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessVeryLow // 低刚性，动画更慢
+            )
+        )
+    }
+
 }

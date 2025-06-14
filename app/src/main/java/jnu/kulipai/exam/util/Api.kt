@@ -1,10 +1,306 @@
 package jnu.kulipai.exam.util
 
-class Api {
+import android.content.Context
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.serialization.SerialName
+import okhttp3.Call
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.Response
+import org.json.JSONArray
+import java.io.IOException
+import okhttp3.Callback
+import java.io.BufferedReader
+import java.io.File
+import java.io.FileOutputStream
+import java.io.InputStreamReader
+
+//data class Link(
+//    val self: String,
+//    val git: String,
+//    val html: String
+//)
+//
+////原本想用kotlin强大json反序列化，但是要导包
+////不对我喜欢org.json
+//data class FileItem(
+//    val name: String,
+//    val path: String,
+//    val sha: String,
+//    val size: Int,
+//    val url: String,
+//    @SerialName("html_url")
+//    val htmlUrl: String,
+//    @SerialName("git_url")
+//    val gitUrl: String,
+//    @SerialName("download_url")
+//    val downloadUrl: String? = null,
+//    val type: String,
+//    @SerialName("_links")
+//    val links: Link
+//)
+
+
+object Api {
+//    fun parseFileItems(jsonString: String): List<FileItem> {
+//        val list = mutableListOf<FileItem>()
+//        val jsonArray = JSONArray(jsonString)
+//        for (i in 0 until jsonArray.length()) {
+//            val obj = jsonArray.getJSONObject(i)
+//            val linksObj = obj.getJSONObject("_links")
+//            val links = Link(
+//                self = linksObj.getString("self"),
+//                git = linksObj.getString("git"),
+//                html = linksObj.getString("html")
+//            )
+//            val item = FileItem(
+//                name = obj.getString("name"),
+//                path = obj.getString("path"),
+//                sha = obj.getString("sha"),
+//                size = obj.getInt("size"),
+//                url = obj.getString("url"),
+//                htmlUrl = obj.getString("html_url"),
+//                gitUrl = obj.getString("git_url"),
+//                downloadUrl = if (obj.isNull("download_url")) null else obj.getString("download_url"),
+//                type = obj.getString("type"),
+//                links = links
+//            )
+//            list.add(item)
+//        }
+//        return list
+//    }
+//
+//    //ai很好用
+//    fun FileSort(rawFileItems: List<FileItem>): List<FileItem> {
+//        // 排序逻辑
+//        return rawFileItems.sortedWith(
+//            compareBy<FileItem> { item ->
+//                // 主要排序：dir 在 file 之前
+//                when (item.type) {
+//                    "dir" -> 0 // dir 类型排在前面
+//                    "file" -> 1 // file 类型排在后面
+//                    else -> 2 // 其他未知类型排在最后
+//                }
+//            }.thenBy { item ->
+//                // 次要排序：在同类型中按 name 字母顺序排序
+//                item.name
+//            }
+//        )
+//    }
+
+
+
+
+    //没活了就..一下吧.............
+    fun DotDot(path: String): String {
+        val trimmed = path.trimEnd('/')
+        val lastSlashIndex = trimmed.lastIndexOf('/')
+        if (lastSlashIndex <= 0) return "/"
+
+        return trimmed.substring(0, lastSlashIndex + 1)
+    }
+
+    fun formatFileSize(bytes: Long): String {
+        if (bytes < 1024) return "$bytes B"
+        val units = arrayOf("KB", "MB", "GB", "TB", "PB", "EB")
+        var size = bytes.toDouble()
+        var unitIndex = -1
+        do {
+            size /= 1024
+            unitIndex++
+        } while (size >= 1024 && unitIndex < units.size - 1)
+        return "%.1f %s".format(size, units[unitIndex])
+    }
+
+
+    // 使用协程在IO线程执行网络请求
+    suspend fun performGetRequest(url: String): String = withContext(Dispatchers.IO) {
+        val client = OkHttpClient()
+        val request = Request.Builder().url(url).build()
+        try {
+            client.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) throw IOException("Unexpected code $response")
+                response.body?.string() ?: "err"
+            }
+        } catch (e: Exception) {
+            "err"
+        }
+    }
+
+    fun downloadFileToInternal(
+        context: Context,
+        url: String,
+        filename: String,
+        onSuccess: () -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+        val client = OkHttpClient()
+
+        val request = Request.Builder()
+            .url(url)
+            .build()
+
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                onFailure(e)
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                if (!response.isSuccessful) {
+                    onFailure(IOException("Unexpected code $response"))
+                    return
+                }
+
+                try {
+                    val inputStream = response.body?.byteStream()
+                    val file = File(context.filesDir, filename)
+                    val outputStream = FileOutputStream(file)
+
+                    inputStream?.use { input ->
+                        outputStream.use { output ->
+                            input.copyTo(output)
+                        }
+                    }
+
+                    onSuccess()
+                } catch (e: Exception) {
+                    onFailure(e)
+                }
+            }
+        })
+    }
+    //例子
+    /*
+    downloadFileToInternal(
+    context = this,
+    url = "http://example.com/a.zip",
+    filename = "a.zip",
+    onSuccess = {
+        runOnUiThread {
+            Toast.makeText(this, "下载成功！", Toast.LENGTH_SHORT).show()
+        }
+    },
+    onFailure = {
+        runOnUiThread {
+            Toast.makeText(this, "下载失败：${it.message}", Toast.LENGTH_LONG).show()
+        }
+    }
+)
+
+     */
+
+
+
+
+    val exampleData = """
+        [
+          {
+            "name": "LICENSE",
+            "path": "LICENSE",
+            "sha": "2712c90913cb840d09abf53334cc9d8b0ccabd65",
+            "size": 1062,
+            "url": "https://api.github.com/repos/gubaiovo/JNU-EXAM/contents/LICENSE?ref=main",
+            "html_url": "https://github.com/gubaiovo/JNU-EXAM/blob/main/LICENSE",
+            "git_url": "https://api.github.com/repos/gubaiovo/JNU-EXAM/git/blobs/2712c90913cb840d09abf53334cc9d8b0ccabd65",
+            "download_url": "https://raw.githubusercontent.com/gubaiovo/JNU-EXAM/main/LICENSE",
+            "type": "file",
+            "_links": {
+              "self": "https://api.github.com/repos/gubaiovo/JNU-EXAM/contents/LICENSE?ref=main",
+              "git": "https://api.github.com/repos/gubaiovo/JNU-EXAM/git/blobs/2712c90913cb840d09abf53334cc9d8b0ccabd65",
+              "html": "https://github.com/gubaiovo/JNU-EXAM/blob/main/LICENSE"
+            }
+          },
+          {
+            "name": "README.md",
+            "path": "README.md",
+            "sha": "aa5ef0112c30f3c34fc436764beeb51efcad1b4b",
+            "size": 820,
+            "url": "https://api.github.com/repos/gubaiovo/JNU-EXAM/contents/README.md?ref=main",
+            "html_url": "https://github.com/gubaiovo/JNU-EXAM/blob/main/README.md",
+            "git_url": "https://api.github.com/repos/gubaiovo/JNU-EXAM/git/blobs/aa5ef0112c30f3c34fc436764beeb51efcad1b4b",
+            "download_url": "https://raw.githubusercontent.com/gubaiovo/JNU-EXAM/main/README.md",
+            "type": "file",
+            "_links": {
+              "self": "https://api.github.com/repos/gubaiovo/JNU-EXAM/contents/README.md?ref=main",
+              "git": "https://api.github.com/repos/gubaiovo/JNU-EXAM/git/blobs/aa5ef0112c30f3c34fc436764beeb51efcad1b4b",
+              "html": "https://github.com/gubaiovo/JNU-EXAM/blob/main/README.md"
+            }
+          },
+          {
+            "name": "乱七八糟的资料",
+            "path": "乱七八糟的资料",
+            "sha": "ceb76f9013842d51640fc84a2b0d430971e4a09e",
+            "size": 0,
+            "url": "https://api.github.com/repos/gubaiovo/JNU-EXAM/contents/%E4%B9%B1%E4%B8%83%E5%85%AB%E7%B3%9F%E7%9A%84%E8%B5%84%E6%96%99?ref=main",
+            "html_url": "https://github.com/gubaiovo/JNU-EXAM/tree/main/%E4%B9%B1%E4%B8%83%E5%85%AB%E7%B3%9F%E7%9A%84%E8%B5%84%E6%96%99",
+            "git_url": "https://api.github.com/repos/gubaiovo/JNU-EXAM/git/trees/ceb76f9013842d51640fc84a2b0d430971e4a09e",
+            "download_url": null,
+            "type": "dir",
+            "_links": {
+              "self": "https://api.github.com/repos/gubaiovo/JNU-EXAM/contents/%E4%B9%B1%E4%B8%83%E5%85%AB%E7%B3%9F%E7%9A%84%E8%B5%84%E6%96%99?ref=main",
+              "git": "https://api.github.com/repos/gubaiovo/JNU-EXAM/git/trees/ceb76f9013842d51640fc84a2b0d430971e4a09e",
+              "html": "https://github.com/gubaiovo/JNU-EXAM/tree/main/%E4%B9%B1%E4%B8%83%E5%85%AB%E7%B3%9F%E7%9A%84%E8%B5%84%E6%96%99"
+            }
+          },
+          {
+            "name": "其他学校",
+            "path": "其他学校",
+            "sha": "42b628041bbbab925bbcfffefe6799a4807026d4",
+            "size": 0,
+            "url": "https://api.github.com/repos/gubaiovo/JNU-EXAM/contents/%E5%85%B6%E4%BB%96%E5%AD%A6%E6%A0%A1?ref=main",
+            "html_url": "https://github.com/gubaiovo/JNU-EXAM/tree/main/%E5%85%B6%E4%BB%96%E5%AD%A6%E6%A0%A1",
+            "git_url": "https://api.github.com/repos/gubaiovo/JNU-EXAM/git/trees/42b628041bbbab925bbcfffefe6799a4807026d4",
+            "download_url": null,
+            "type": "dir",
+            "_links": {
+              "self": "https://api.github.com/repos/gubaiovo/JNU-EXAM/contents/%E5%85%B6%E4%BB%96%E5%AD%A6%E6%A0%A1?ref=main",
+              "git": "https://api.github.com/repos/gubaiovo/JNU-EXAM/git/trees/42b628041bbbab925bbcfffefe6799a4807026d4",
+              "html": "https://github.com/gubaiovo/JNU-EXAM/tree/main/%E5%85%B6%E4%BB%96%E5%AD%A6%E6%A0%A1"
+            }
+          },
+          {
+            "name": "大一上",
+            "path": "大一上",
+            "sha": "0ec2c86e73790e87126707c2251fe75dcc94927a",
+            "size": 0,
+            "url": "https://api.github.com/repos/gubaiovo/JNU-EXAM/contents/%E5%A4%A7%E4%B8%80%E4%B8%8A?ref=main",
+            "html_url": "https://github.com/gubaiovo/JNU-EXAM/tree/main/%E5%A4%A7%E4%B8%80%E4%B8%8A",
+            "git_url": "https://api.github.com/repos/gubaiovo/JNU-EXAM/git/trees/0ec2c86e73790e87126707c2251fe75dcc94927a",
+            "download_url": null,
+            "type": "dir",
+            "_links": {
+              "self": "https://api.github.com/repos/gubaiovo/JNU-EXAM/contents/%E5%A4%A7%E4%B8%80%E4%B8%8A?ref=main",
+              "git": "https://api.github.com/repos/gubaiovo/JNU-EXAM/git/trees/0ec2c86e73790e87126707c2251fe75dcc94927a",
+              "html": "https://github.com/gubaiovo/JNU-EXAM/tree/main/%E5%A4%A7%E4%B8%80%E4%B8%8A"
+            }
+          },
+          {
+            "name": "大一下",
+            "path": "大一下",
+            "sha": "9119480582fc6709140f2774de4611b6246129b7",
+            "size": 0,
+            "url": "https://api.github.com/repos/gubaiovo/JNU-EXAM/contents/%E5%A4%A7%E4%B8%80%E4%B8%8B?ref=main",
+            "html_url": "https://github.com/gubaiovo/JNU-EXAM/tree/main/%E5%A4%A7%E4%B8%80%E4%B8%8B",
+            "git_url": "https://api.github.com/repos/gubaiovo/JNU-EXAM/git/trees/9119480582fc6709140f2774de4611b6246129b7",
+            "download_url": null,
+            "type": "dir",
+            "_links": {
+              "self": "https://api.github.com/repos/gubaiovo/JNU-EXAM/contents/%E5%A4%A7%E4%B8%80%E4%B8%8B?ref=main",
+              "git": "https://api.github.com/repos/gubaiovo/JNU-EXAM/git/trees/9119480582fc6709140f2774de4611b6246129b7",
+              "html": "https://github.com/gubaiovo/JNU-EXAM/tree/main/%E5%A4%A7%E4%B8%80%E4%B8%8B"
+            }
+          }
+        ]
+    """.trimIndent()
+
 }
 
 
-
+//实例数据，记得删了，不要上传到github
 
 /*
 https://api.github.com/repos/gubaiovo/JNU-EXAM/contents
