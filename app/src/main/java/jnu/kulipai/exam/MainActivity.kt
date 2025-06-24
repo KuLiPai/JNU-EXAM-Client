@@ -7,20 +7,28 @@ import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -37,6 +45,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -52,6 +61,8 @@ import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SearchBar
+import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -63,6 +74,7 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -82,6 +94,8 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.traversalIndex
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
@@ -115,7 +129,10 @@ import kotlin.math.abs
 
 val pwd = mutableStateOf("/")
 var loadingState = mutableStateOf(LoadingState.Loading)
+
+//main的
 lateinit var appPrefs: AppPreferences
+
 
 class MainActivity : ComponentActivity() {
 
@@ -145,6 +162,10 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+
+        //拦截返回，细节但很实用，（可能不算细节）
+        //有bug，如果用户退出在打开，就无法拦截了
+        //todo 加那个第一次启动监听，或者其他方法
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 if (pwd.value != "/") {
@@ -168,6 +189,7 @@ class MainActivity : ComponentActivity() {
 }
 
 
+//这里有笼罩动画，状态栏
 @Composable
 fun MainApp(appPrefs: AppPreferences, context: Context) {
 
@@ -215,6 +237,7 @@ fun MainApp(appPrefs: AppPreferences, context: Context) {
 
 //非常棒的Material 3 Experiment
 @OptIn(ExperimentalMaterial3Api::class)
+//标题栏
 @Composable
 fun MainScaffold(
     isDarkTheme: Boolean,
@@ -222,67 +245,140 @@ fun MainScaffold(
     onThemeToggle: MaskAnimActive,
     context: Context
 ) {
-
-
-//    //pwd没错就是pwd
-//    var pwd = remember { mutableStateOf("/") }
-
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
-            key(isDarkTheme) {
-                TopAppBar(
-                    title = {
-                        Text(
+            Box {
 
-                            if (pwd.value == "/") "期末无挂" else if (pwd.value.length >= 8) ".." + pwd.value.substring(
-                                pwd.value.length - 8
-                            ) else pwd.value,
-                            modifier = Modifier.animateContentSize(),
-                        )
-                    },
-                    navigationIcon = {
-                        if (pwd.value != "/") {
-                            Icon(
-                                modifier = Modifier.padding(16.dp, 0.dp, 4.dp, 0.dp),
-                                painter = painterResource(R.drawable.folder_open_24px),
-                                contentDescription = null
-                            )
-                        } else {
-                            Icon(
-                                modifier = Modifier.padding(16.dp, 0.dp, 4.dp, 0.dp),
-                                painter = painterResource(R.drawable.biglogo),
-                                contentDescription = null
-                            )
-                        }
 
-                    },
-                    actions = {
-                        //别忘了路径过程隐藏一些按钮，
-                        //好吧忘了，不对懒了
-                        ThemeToggleButton(
-                            isDarkTheme = isDarkTheme,
-                            isAnimating = isAnimating,
-                            onThemeToggle = onThemeToggle
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        IconButton(onClick = {}) {
-                            Icon(
-                                imageVector = Icons.Default.Settings,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurface
+                key(isDarkTheme) {
+
+                    TopAppBar(
+                        title = {
+
+                            AnimatedContent(
+                                targetState = pwd.value, // 监视 pwd 的变化
+                                transitionSpec = {
+                                    // 定义进入和退出动画
+                                    // 旧内容向左滑动并淡出，新内容从右侧滑入并淡入
+                                    if (targetState.length > initialState.length) {
+                                        (slideInHorizontally { fullWidth -> fullWidth } + fadeIn())
+                                            .togetherWith(slideOutHorizontally { fullWidth -> -fullWidth } + fadeOut())
+                                            // SizeTransform 会动画 AnimatedContent 容器的尺寸变化
+                                            .using(SizeTransform(clip = false)) // clip = false 防止内容在动画过程中被裁剪
+                                    } else {
+                                        (slideInHorizontally { fullWidth -> -fullWidth } + fadeIn())
+                                            .togetherWith(slideOutHorizontally { fullWidth -> fullWidth } + fadeOut())
+                                            // SizeTransform 会动画 AnimatedContent 容器的尺寸变化
+                                            .using(SizeTransform(clip = false)) // clip = false 防止内容在动画过程中被裁剪
+                                    }
+
+                                },
+                                modifier = Modifier.animateContentSize(animationSpec = tween(150)), // 仍然保留 animateContentSize 来动画 Text 组件自身的尺寸变化
+                                label = "PathTextAnimation"
+                            ) { targetPwd -> // targetPwd 是当前动画的目标 pwd 值
+                                Text(
+                                    if (targetPwd == "/") "期末无挂" else if (targetPwd.length >= 8) ".." + targetPwd.substring(
+                                        targetPwd.length - 8
+                                    ) else targetPwd,
+//                                modifier = Modifier.animateContentSize(),
+                                    maxLines = 1, // 确保文本在一行内，方便水平滑动动画
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+
+
+//                        Text(
+//                            if (pwd.value == "/") "期末无挂" else if (pwd.value.length >= 8) ".." + pwd.value.substring(
+//                                pwd.value.length - 8
+//                            ) else pwd.value,
+//                            modifier = Modifier.animateContentSize(),
+//                        )
+                        },
+                        navigationIcon = {
+                            if (pwd.value != "/") {
+                                Icon(
+                                    modifier = Modifier.padding(16.dp, 0.dp, 4.dp, 0.dp),
+                                    painter = painterResource(R.drawable.folder_open_24px),
+                                    contentDescription = null
+                                )
+                            } else {
+                                Icon(
+                                    modifier = Modifier.padding(16.dp, 0.dp, 4.dp, 0.dp),
+                                    painter = painterResource(R.drawable.biglogo),
+                                    contentDescription = null
+                                )
+                            }
+
+                        },
+                        actions = {
+                            //别忘了路径过长隐藏一些按钮，
+                            //好吧忘了，不对懒了
+                            ThemeToggleButton(
+                                isDarkTheme = isDarkTheme,
+                                isAnimating = isAnimating,
+                                onThemeToggle = onThemeToggle
                             )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            IconButton(onClick = {}) {
+                                Icon(
+                                    imageVector = Icons.Default.Settings,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
                         }
-                        Spacer(modifier = Modifier.width(8.dp))
-                    }
-                )
+                    )
+                }
+
+
+
+                //超级搜索框
+//                var expanded by rememberSaveable { mutableStateOf(false) }
+//                SearchBar(
+//                    modifier = Modifier
+//                        .semantics { traversalIndex = 0f },
+//                    inputField = {
+//                        // Customizable input field implementation
+//                        SearchBarDefaults.InputField(
+//                            query = "query",
+//                            onQueryChange = {},
+//                            onSearch = {
+//                                {  }
+//                                expanded = false
+//                            },
+//                            expanded = expanded,
+//                            onExpandedChange = { expanded = it },
+//                            placeholder = { Text("Search") },
+//                            leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+//                            trailingIcon = null
+//                        )
+//                    },
+//                    expanded = expanded,
+//                    onExpandedChange = { expanded = it },
+//                ) {
+//                }
+
             }
+
+
         }
+
+
     ) { innerPadding ->
-        MainContent(modifier = Modifier.padding(innerPadding), pwd, context)
+
+        Column {
+
+
+            MainContent(modifier = Modifier.padding(innerPadding), pwd, context)
+
+        }
     }
 }
 
+
+//夜间切换按钮
 @Composable
 fun ThemeToggleButton(
     isDarkTheme: Boolean,
@@ -316,6 +412,8 @@ enum class LoadingState { Loading, Loaded, Step }
 
 lateinit var root: DirNode
 
+//主页
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainContent(modifier: Modifier = Modifier, pwd: MutableState<String>, context: Context) {
 
@@ -367,6 +465,7 @@ fun MainContent(modifier: Modifier = Modifier, pwd: MutableState<String>, contex
     }
 
 
+
     Box(
         modifier = modifier
             .fillMaxSize(),
@@ -374,7 +473,7 @@ fun MainContent(modifier: Modifier = Modifier, pwd: MutableState<String>, contex
         AnimatedVisibility(
             visible = loadingState.value == LoadingState.Loading,
             enter = fadeIn(animationSpec = tween(durationMillis = 100)),
-            exit = fadeOut(animationSpec = tween(durationMillis = 200)),
+            exit = fadeOut(animationSpec = tween(durationMillis = 50)),
         ) {
 
             LottieAnimation(composition = composition, progress = { progress })
@@ -383,8 +482,8 @@ fun MainContent(modifier: Modifier = Modifier, pwd: MutableState<String>, contex
 
         AnimatedVisibility(
             visible = loadingState.value == LoadingState.Loaded,
-            enter = fadeIn(animationSpec = tween(durationMillis = 400)),
-            exit = fadeOut(animationSpec = tween(durationMillis = 200)),
+            enter = fadeIn(animationSpec = tween(durationMillis = 300)),
+            exit = fadeOut(animationSpec = tween(durationMillis = 50)),
 
 
             ) {
@@ -411,15 +510,20 @@ fun MainContent(modifier: Modifier = Modifier, pwd: MutableState<String>, contex
                 }
             }
 
-            Box {
-                LazyColumn(
-                    modifier = Modifier.animateContentSize(),
-                ) {
+
+
+            Box(
+
+            ) {
+                // 可选：展开时显示推荐词、历史记录等内容
+
+
+                LazyColumn {
                     items(newdata) { item ->
                         if (item is DirNode) {
                             FolderCard(name = item.name, pwd, loadingState)
                         } else if (item is FileManager.FileItem) {
-                            FileCard(item)
+                            FileCard(item, context)
                         }
 
                     }
@@ -428,12 +532,13 @@ fun MainContent(modifier: Modifier = Modifier, pwd: MutableState<String>, contex
                     BounceUpButton(context)
                 }
             }
-
         }
+
     }
 }
 
 
+//文件夹
 @OptIn(DelicateCoroutinesApi::class)
 @Composable
 fun FolderCard(
@@ -446,16 +551,20 @@ fun FolderCard(
             if (name == "..") {
                 GlobalScope.launch {
                     loadingState.value = LoadingState.Step
-                    delay(250)
+                    delay(50)
                     pwd.value = Api.DotDot(pwd.value)
+                    delay(200)
+
                     loadingState.value = LoadingState.Loaded
                 }
             } else {
 
                 GlobalScope.launch {
                     loadingState.value = LoadingState.Step
-                    delay(250)
+                    delay(50)
                     pwd.value += "$name/"
+                    delay(200)
+
                     loadingState.value = LoadingState.Loaded
                 }
 
@@ -493,9 +602,11 @@ fun FolderCard(
 
 enum class DownLoadState { DownLoading, Downloaded, Err, None }
 
+
+//文件
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun FileCard(item: FileManager.FileItem) {
+fun FileCard(item: FileManager.FileItem, context: Context) {
 
     var downloadState by remember { mutableStateOf(DownLoadState.None) }
     var expanded by remember { mutableStateOf(false) }
@@ -509,8 +620,9 @@ fun FileCard(item: FileManager.FileItem) {
 
     OutlinedCard(
         modifier = Modifier
-            .animateContentSize()
+//            .animateContentSize()
             .fillMaxWidth()
+//            .animateContentSize(animationSpec = tween(300)) // 动画 Card 自身的高度变化
             .padding(24.dp, 6.dp),
         onClick = { expanded = !expanded },
 
@@ -558,91 +670,143 @@ fun FileCard(item: FileManager.FileItem) {
             }
 
 
-            if (expanded) {
-                HorizontalDivider(modifier = Modifier.padding(24.dp, 0.dp))
-                Column(
-                    modifier = Modifier.padding(24.dp, 16.dp)
-                ) {
-                    Row {
-                        Text("路径: ")
-                        Text(item.path)
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("大小: ${Api.formatFileSize(item.size)}")
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
+            AnimatedVisibility(
+                visible = expanded,
+                enter = expandVertically(
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessLow
+                    )
+                ) + fadeIn(
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioNoBouncy,
+                        stiffness = Spring.StiffnessLow
+                    )
+                ),
+                exit = shrinkVertically(
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioNoBouncy, // ✅ 改成 NoBouncy
+                        stiffness = Spring.StiffnessMedium // ✅ 稍微增加刚度，减少残影
+                    )
+                ) + fadeOut(
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioNoBouncy,
+                        stiffness = Spring.StiffnessLow
+                    )
+                )
+            )
+            {
+                // 这个 Column 包含了所有展开时显示的内容
+                Column {
+                    HorizontalDivider(modifier = Modifier.padding(24.dp, 0.dp))
+                    Column(
+                        modifier = Modifier.padding(24.dp, 16.dp)
                     ) {
-                        Text("直链: ")
-                        CopyableTextWithShape("Github", item.github_raw_url)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        CopyableTextWithShape(
-                            "Gitee", item.gitee_raw_url
-                        )
+                        Row {
+                            Text("路径: ")
+                            Text(item.path)
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text("大小: ${Api.formatFileSize(item.size)}")
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("直链: ")
+                            CopyableTextWithShape("Github", item.github_raw_url)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            CopyableTextWithShape(
+                                "Gitee", item.gitee_raw_url
+                            )
 //                        CopyableTextWithShape(
 //                            if(appPre.Repo=="github")item.github_raw_url.toString()else item.gitee_raw_url,
 //                            backgroundColor = MaterialTheme.colorScheme.primary
 //                        )
-                    }
-
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(0.dp, 16.dp, 0.dp, 0.dp),
-                        horizontalArrangement = Arrangement.End
-                    ) {
-                        ElevatedButton(
-                            onClick = {
-
-                            },
-                            contentPadding = PaddingValues(
-                                start = 16.dp,
-                                top = 6.dp,
-                                end = 16.dp,
-                                bottom = 6.dp
-                            )
-
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.visibility_24px),
-                                contentDescription = null
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("预览")
                         }
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Button(//暂时的下载
-                            onClick = {
-                                downloadState = DownLoadState.DownLoading
-                            },
-                            contentPadding = PaddingValues(
-                                start = 16.dp,
-                                top = 6.dp,
-                                end = 16.dp,
-                                bottom = 6.dp
-                            )
-                        ) {
 
-                            if (downloadState == DownLoadState.None) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(0.dp, 16.dp, 0.dp, 0.dp),
+                            horizontalArrangement = Arrangement.End
+                        ) {
+                            ElevatedButton(
+                                onClick = {
+
+                                },
+                                contentPadding = PaddingValues(
+                                    start = 16.dp,
+                                    top = 6.dp,
+                                    end = 16.dp,
+                                    bottom = 6.dp
+                                )
+
+                            ) {
                                 Icon(
-                                    painter = painterResource(R.drawable.download_24px),
+                                    painter = painterResource(R.drawable.visibility_24px),
                                     contentDescription = null
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text("下载")
-                            } else if (downloadState == DownLoadState.DownLoading) {
-                                LoadingIndicator(
-                                    color = MaterialTheme.colorScheme.onPrimary,
-                                    modifier = Modifier
-                                        .width(24.dp)
-                                        .height(24.dp),
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text("下载中")
+                                Text("预览")
                             }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Button(//暂时的下载
+                                onClick = {
+                                    downloadState = DownLoadState.DownLoading
+                                    if (appPrefs.Repo == "gitee") {
+                                        Api.downloadFileToInternal(
+                                            context,
+                                            item.gitee_raw_url,
+                                            item.path,
+                                            {
+                                                downloadState = DownLoadState.Downloaded
+                                            },
+                                            {
+                                                downloadState = DownLoadState.Err
+                                            })
+                                    } else {
+                                        Api.downloadFileToInternal(
+                                            context,
+                                            item.github_raw_url,
+                                            item.path,
+                                            {
+                                                downloadState = DownLoadState.Downloaded
+                                            },
+                                            {
+                                                downloadState = DownLoadState.Err
+                                            })
+                                    }
+
+                                },
+                                contentPadding = PaddingValues(
+                                    start = 16.dp,
+                                    top = 6.dp,
+                                    end = 16.dp,
+                                    bottom = 6.dp
+                                )
+                            ) {
+
+                                if (downloadState == DownLoadState.None) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.download_24px),
+                                        contentDescription = null
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("下载")
+                                } else if (downloadState == DownLoadState.DownLoading) {
+                                    LoadingIndicator(
+                                        color = MaterialTheme.colorScheme.onPrimary,
+                                        modifier = Modifier
+                                            .width(24.dp)
+                                            .height(24.dp),
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("下载中")
+                                }
 
 
+                            }
                         }
                     }
                 }
@@ -735,12 +899,12 @@ class TextShape(
             textLayoutResult.getLineRect(0).addHorizontalPadding(paddingPx)
         }
         path.moveTo(previousLine.left, previousLine.top + curveRadiusPx)
-        path.quadraticBezierTo(
+        path.quadraticTo(
             x1 = previousLine.left, y1 = previousLine.top,
             x2 = previousLine.left + curveRadiusPx, y2 = previousLine.top
         )
         path.lineTo(previousLine.right - curveRadiusPx, previousLine.top)
-        path.quadraticBezierTo(
+        path.quadraticTo(
             x1 = previousLine.right, y1 = previousLine.top,
             x2 = previousLine.right, y2 = previousLine.top + curveRadiusPx
         )
@@ -754,12 +918,12 @@ class TextShape(
             if (abs(currentLine.right - previousLine.right) > curveRadiusPx) {
                 val normalizedCurveRadius =
                     if (currentLine.right > previousLine.right) curveRadiusPx else -curveRadiusPx
-                path.quadraticBezierTo(
+                path.quadraticTo(
                     x1 = previousLine.right, y1 = previousLine.bottom,
                     x2 = previousLine.right + normalizedCurveRadius, y2 = currentLine.top
                 )
                 path.lineTo(currentLine.right - normalizedCurveRadius, currentLine.top)
-                path.quadraticBezierTo(
+                path.quadraticTo(
                     x1 = currentLine.right, y1 = currentLine.top,
                     x2 = currentLine.right, y2 = currentLine.top + curveRadiusPx
                 )
@@ -775,12 +939,12 @@ class TextShape(
         }
 
         // Step 3: Draw bottom line and bottom corners
-        path.quadraticBezierTo(
+        path.quadraticTo(
             x1 = previousLine.right, y1 = previousLine.bottom,
             x2 = previousLine.right - curveRadiusPx, y2 = previousLine.bottom
         )
         path.lineTo(previousLine.left + curveRadiusPx, previousLine.bottom)
-        path.quadraticBezierTo(
+        path.quadraticTo(
             x1 = previousLine.left, y1 = previousLine.bottom,
             x2 = previousLine.left, y2 = previousLine.bottom - curveRadiusPx
         )
@@ -794,12 +958,12 @@ class TextShape(
             if (abs(previousLine.left - currentLine.left) > curveRadiusPx) {
                 val normalizedCurveRadius =
                     if (previousLine.left > currentLine.left) -curveRadiusPx else curveRadiusPx
-                path.quadraticBezierTo(
+                path.quadraticTo(
                     x1 = previousLine.left, y1 = previousLine.top,
                     x2 = previousLine.left + normalizedCurveRadius, y2 = currentLine.bottom
                 )
                 path.lineTo(currentLine.left - normalizedCurveRadius, currentLine.bottom)
-                path.quadraticBezierTo(
+                path.quadraticTo(
                     x1 = currentLine.left, y1 = currentLine.bottom,
                     x2 = currentLine.left, y2 = currentLine.bottom - curveRadiusPx
                 )
@@ -820,7 +984,7 @@ class TextShape(
     }
 }
 
-// 自己封装
+// 点击复制文字，仿TG的，
 @Composable
 fun CopyableTextWithShape(
     text: String,
@@ -891,6 +1055,7 @@ fun CopyableTextWithShape(
     )
 }
 
+//每日更新仓库的按钮
 @OptIn(DelicateCoroutinesApi::class)
 @Composable
 fun BounceUpButton(context: Context) {
@@ -920,6 +1085,7 @@ fun BounceUpButton(context: Context) {
 
                 appPrefs.Day = LocalDate.now().dayOfMonth
 
+                //有点问题好像，协程中不能干什么来的，好久没看这个忘记了
 //                GlobalScope.launch {
 //                    //http
 //                    try {

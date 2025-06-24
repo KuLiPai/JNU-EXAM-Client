@@ -484,7 +484,7 @@ fun PingText(
                     socket.connect(InetSocketAddress(host, port), timeoutMillis)
                     true
                 }
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 false
             }
             val duration = System.currentTimeMillis() - start

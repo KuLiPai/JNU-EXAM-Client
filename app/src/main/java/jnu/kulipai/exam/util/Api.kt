@@ -17,6 +17,7 @@ import okhttp3.Callback
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileOutputStream
+import java.io.InputStream
 import java.io.InputStreamReader
 
 //data class Link(
@@ -134,7 +135,7 @@ object Api {
     fun downloadFileToInternal(
         context: Context,
         url: String,
-        filename: String,
+        relativePath: String, // 修改参数名，更清晰地表示相对路径
         onSuccess: () -> Unit,
         onFailure: (Exception) -> Unit
     ) {
@@ -146,29 +147,55 @@ object Api {
 
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
-                onFailure(e)
+                onFailure(e) // 网络请求失败
             }
 
             override fun onResponse(call: Call, response: Response) {
                 if (!response.isSuccessful) {
-                    onFailure(IOException("Unexpected code $response"))
+                    // HTTP 状态码不是 2xx 的情况
+                    onFailure(IOException("HTTP Error: ${response.code} - ${response.message}"))
                     return
                 }
 
-                try {
-                    val inputStream = response.body?.byteStream()
-                    val file = File(context.filesDir, filename)
-                    val outputStream = FileOutputStream(file)
+                var inputStream: InputStream? = null
+                var outputStream: FileOutputStream? = null
 
-                    inputStream?.use { input ->
-                        outputStream.use { output ->
-                            input.copyTo(output)
+                try {
+                    inputStream = response.body?.byteStream()
+                    if (inputStream == null) {
+                        onFailure(IOException("Response body is null."))
+                        return
+                    }
+
+                    // 构建目标文件对象
+                    val destinationFile = File(context.filesDir, relativePath)
+
+                    // 确保父目录存在
+                    val parentDir = destinationFile.parentFile
+                    if (parentDir != null && !parentDir.exists()) {
+                        if (!parentDir.mkdirs()) { // 创建多级目录
+                            onFailure(IOException("Failed to create parent directories: ${parentDir.absolutePath}"))
+                            return
                         }
                     }
 
-                    onSuccess()
+                    outputStream = FileOutputStream(destinationFile)
+
+                    // 使用 Kotlin 的 copyTo 扩展函数进行文件拷贝，更简洁高效
+                    inputStream.copyTo(outputStream)
+
+                    onSuccess() // 下载并写入成功
                 } catch (e: Exception) {
-                    onFailure(e)
+                    onFailure(e) // 捕获文件IO、JSON解析等所有可能异常
+                } finally {
+                    // 确保流被关闭
+                    try {
+                        inputStream?.close()
+                        outputStream?.close()
+                        response.body?.close() // 关闭响应体，释放资源
+                    } catch (e: IOException) {
+                        e.printStackTrace() // 打印关闭流时的异常，但不影响主流程
+                    }
                 }
             }
         })
