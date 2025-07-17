@@ -1,24 +1,17 @@
 package jnu.kulipai.exam.util
 
 import android.content.Context
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.SerialName
 import okhttp3.Call
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import org.json.JSONArray
 import java.io.IOException
 import okhttp3.Callback
-import java.io.BufferedReader
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
-import java.io.InputStreamReader
 
 //data class Link(
 //    val self: String,
@@ -125,9 +118,9 @@ object Api {
         try {
             client.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) throw IOException("Unexpected code $response")
-                response.body?.string() ?: "err"
+                response.body.string()
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             "err"
         }
     }
@@ -161,11 +154,7 @@ object Api {
                 var outputStream: FileOutputStream? = null
 
                 try {
-                    inputStream = response.body?.byteStream()
-                    if (inputStream == null) {
-                        onFailure(IOException("Response body is null."))
-                        return
-                    }
+                    inputStream = response.body.byteStream()
 
                     // 构建目标文件对象
                     val destinationFile = File(context.filesDir, relativePath)
@@ -192,7 +181,7 @@ object Api {
                     try {
                         inputStream?.close()
                         outputStream?.close()
-                        response.body?.close() // 关闭响应体，释放资源
+                        response.body.close() // 关闭响应体，释放资源
                     } catch (e: IOException) {
                         e.printStackTrace() // 打印关闭流时的异常，但不影响主流程
                     }
@@ -220,109 +209,6 @@ object Api {
 
      */
 
-
-
-
-    val exampleData = """
-        [
-          {
-            "name": "LICENSE",
-            "path": "LICENSE",
-            "sha": "2712c90913cb840d09abf53334cc9d8b0ccabd65",
-            "size": 1062,
-            "url": "https://api.github.com/repos/gubaiovo/JNU-EXAM/contents/LICENSE?ref=main",
-            "html_url": "https://github.com/gubaiovo/JNU-EXAM/blob/main/LICENSE",
-            "git_url": "https://api.github.com/repos/gubaiovo/JNU-EXAM/git/blobs/2712c90913cb840d09abf53334cc9d8b0ccabd65",
-            "download_url": "https://raw.githubusercontent.com/gubaiovo/JNU-EXAM/main/LICENSE",
-            "type": "file",
-            "_links": {
-              "self": "https://api.github.com/repos/gubaiovo/JNU-EXAM/contents/LICENSE?ref=main",
-              "git": "https://api.github.com/repos/gubaiovo/JNU-EXAM/git/blobs/2712c90913cb840d09abf53334cc9d8b0ccabd65",
-              "html": "https://github.com/gubaiovo/JNU-EXAM/blob/main/LICENSE"
-            }
-          },
-          {
-            "name": "README.md",
-            "path": "README.md",
-            "sha": "aa5ef0112c30f3c34fc436764beeb51efcad1b4b",
-            "size": 820,
-            "url": "https://api.github.com/repos/gubaiovo/JNU-EXAM/contents/README.md?ref=main",
-            "html_url": "https://github.com/gubaiovo/JNU-EXAM/blob/main/README.md",
-            "git_url": "https://api.github.com/repos/gubaiovo/JNU-EXAM/git/blobs/aa5ef0112c30f3c34fc436764beeb51efcad1b4b",
-            "download_url": "https://raw.githubusercontent.com/gubaiovo/JNU-EXAM/main/README.md",
-            "type": "file",
-            "_links": {
-              "self": "https://api.github.com/repos/gubaiovo/JNU-EXAM/contents/README.md?ref=main",
-              "git": "https://api.github.com/repos/gubaiovo/JNU-EXAM/git/blobs/aa5ef0112c30f3c34fc436764beeb51efcad1b4b",
-              "html": "https://github.com/gubaiovo/JNU-EXAM/blob/main/README.md"
-            }
-          },
-          {
-            "name": "乱七八糟的资料",
-            "path": "乱七八糟的资料",
-            "sha": "ceb76f9013842d51640fc84a2b0d430971e4a09e",
-            "size": 0,
-            "url": "https://api.github.com/repos/gubaiovo/JNU-EXAM/contents/%E4%B9%B1%E4%B8%83%E5%85%AB%E7%B3%9F%E7%9A%84%E8%B5%84%E6%96%99?ref=main",
-            "html_url": "https://github.com/gubaiovo/JNU-EXAM/tree/main/%E4%B9%B1%E4%B8%83%E5%85%AB%E7%B3%9F%E7%9A%84%E8%B5%84%E6%96%99",
-            "git_url": "https://api.github.com/repos/gubaiovo/JNU-EXAM/git/trees/ceb76f9013842d51640fc84a2b0d430971e4a09e",
-            "download_url": null,
-            "type": "dir",
-            "_links": {
-              "self": "https://api.github.com/repos/gubaiovo/JNU-EXAM/contents/%E4%B9%B1%E4%B8%83%E5%85%AB%E7%B3%9F%E7%9A%84%E8%B5%84%E6%96%99?ref=main",
-              "git": "https://api.github.com/repos/gubaiovo/JNU-EXAM/git/trees/ceb76f9013842d51640fc84a2b0d430971e4a09e",
-              "html": "https://github.com/gubaiovo/JNU-EXAM/tree/main/%E4%B9%B1%E4%B8%83%E5%85%AB%E7%B3%9F%E7%9A%84%E8%B5%84%E6%96%99"
-            }
-          },
-          {
-            "name": "其他学校",
-            "path": "其他学校",
-            "sha": "42b628041bbbab925bbcfffefe6799a4807026d4",
-            "size": 0,
-            "url": "https://api.github.com/repos/gubaiovo/JNU-EXAM/contents/%E5%85%B6%E4%BB%96%E5%AD%A6%E6%A0%A1?ref=main",
-            "html_url": "https://github.com/gubaiovo/JNU-EXAM/tree/main/%E5%85%B6%E4%BB%96%E5%AD%A6%E6%A0%A1",
-            "git_url": "https://api.github.com/repos/gubaiovo/JNU-EXAM/git/trees/42b628041bbbab925bbcfffefe6799a4807026d4",
-            "download_url": null,
-            "type": "dir",
-            "_links": {
-              "self": "https://api.github.com/repos/gubaiovo/JNU-EXAM/contents/%E5%85%B6%E4%BB%96%E5%AD%A6%E6%A0%A1?ref=main",
-              "git": "https://api.github.com/repos/gubaiovo/JNU-EXAM/git/trees/42b628041bbbab925bbcfffefe6799a4807026d4",
-              "html": "https://github.com/gubaiovo/JNU-EXAM/tree/main/%E5%85%B6%E4%BB%96%E5%AD%A6%E6%A0%A1"
-            }
-          },
-          {
-            "name": "大一上",
-            "path": "大一上",
-            "sha": "0ec2c86e73790e87126707c2251fe75dcc94927a",
-            "size": 0,
-            "url": "https://api.github.com/repos/gubaiovo/JNU-EXAM/contents/%E5%A4%A7%E4%B8%80%E4%B8%8A?ref=main",
-            "html_url": "https://github.com/gubaiovo/JNU-EXAM/tree/main/%E5%A4%A7%E4%B8%80%E4%B8%8A",
-            "git_url": "https://api.github.com/repos/gubaiovo/JNU-EXAM/git/trees/0ec2c86e73790e87126707c2251fe75dcc94927a",
-            "download_url": null,
-            "type": "dir",
-            "_links": {
-              "self": "https://api.github.com/repos/gubaiovo/JNU-EXAM/contents/%E5%A4%A7%E4%B8%80%E4%B8%8A?ref=main",
-              "git": "https://api.github.com/repos/gubaiovo/JNU-EXAM/git/trees/0ec2c86e73790e87126707c2251fe75dcc94927a",
-              "html": "https://github.com/gubaiovo/JNU-EXAM/tree/main/%E5%A4%A7%E4%B8%80%E4%B8%8A"
-            }
-          },
-          {
-            "name": "大一下",
-            "path": "大一下",
-            "sha": "9119480582fc6709140f2774de4611b6246129b7",
-            "size": 0,
-            "url": "https://api.github.com/repos/gubaiovo/JNU-EXAM/contents/%E5%A4%A7%E4%B8%80%E4%B8%8B?ref=main",
-            "html_url": "https://github.com/gubaiovo/JNU-EXAM/tree/main/%E5%A4%A7%E4%B8%80%E4%B8%8B",
-            "git_url": "https://api.github.com/repos/gubaiovo/JNU-EXAM/git/trees/9119480582fc6709140f2774de4611b6246129b7",
-            "download_url": null,
-            "type": "dir",
-            "_links": {
-              "self": "https://api.github.com/repos/gubaiovo/JNU-EXAM/contents/%E5%A4%A7%E4%B8%80%E4%B8%8B?ref=main",
-              "git": "https://api.github.com/repos/gubaiovo/JNU-EXAM/git/trees/9119480582fc6709140f2774de4611b6246129b7",
-              "html": "https://github.com/gubaiovo/JNU-EXAM/tree/main/%E5%A4%A7%E4%B8%80%E4%B8%8B"
-            }
-          }
-        ]
-    """.trimIndent()
 
 }
 

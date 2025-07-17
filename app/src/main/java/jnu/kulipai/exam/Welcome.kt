@@ -238,7 +238,7 @@ fun OneScreen(navController: NavController) {
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun TwoScreen(navController: NavController) {
     Box(
@@ -445,7 +445,7 @@ fun ThreeScreen(onFinish: () -> Unit) {
                 .align(Alignment.BottomCenter)
                 .padding(0.dp, 0.dp, 0.dp, 64.dp),
             onClick = {
-                appPre.Repo = if (selected) "gitee" else "github"
+                appPre.repo = if (selected) "gitee" else "github"
                 onFinish() // 调用回调，切换到主界面
             }
         ) {

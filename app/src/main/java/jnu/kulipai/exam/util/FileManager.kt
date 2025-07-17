@@ -1,25 +1,12 @@
 package jnu.kulipai.exam.util
 
 import android.content.Context
+import jnu.kulipai.exam.data.model.DirNode
+import jnu.kulipai.exam.data.model.FileItem
 import org.json.JSONObject
 import java.io.File
 
 object FileManager {
-
-    data class FileItem(
-        val name: String,
-        val path: String,
-        val size: Long,
-        val github_raw_url: String,
-        val gitee_raw_url: String
-    )
-
-    data class DirNode(
-        val name: String,
-        val path: String,
-        val files: MutableList<FileItem> = mutableListOf(),
-        val children: MutableMap<String, DirNode> = mutableMapOf()
-    )
 
     fun write(context: Context, filename: String, content: String) {
         context.openFileOutput(filename, Context.MODE_PRIVATE).use { output ->
@@ -99,5 +86,42 @@ object FileManager {
         return DirContent(currentNode.files, currentNode.children.values.toList())
     }
 
+    /**
+     * 递归搜索文件和文件夹名称中包含查询字符串的文件。
+     *
+     * @param rootNode 目录树的根节点。
+     * @param query 要搜索的字符串。
+     * @return 返回一个包含所有匹配文件的列表 (List<FileItem>)。
+     */
+    fun searchFiles(rootNode: DirNode, query: String): List<FileItem> {
+        val matchingFiles = mutableListOf<FileItem>()
+        val searchQuery = query.lowercase() // 忽略大小写进行搜索
+
+        // 定义一个内部递归函数
+        fun recursiveSearch(node: DirNode) {
+            // 1. 检查当前文件夹名称是否匹配
+            val isDirNameMatch = node.name.lowercase().contains(searchQuery)
+
+            // 2. 检查当前节点下的文件
+            for (file in node.files) {
+                // 如果文件夹名称匹配，则该文件夹下所有文件都加入列表
+                // 或者文件名自身匹配
+                if (isDirNameMatch || file.name.lowercase().contains(searchQuery)) {
+                    matchingFiles.add(file)
+                }
+            }
+
+            // 3. 递归地搜索子文件夹
+            for (childNode in node.children.values) {
+                recursiveSearch(childNode)
+            }
+        }
+
+        // 从根节点开始执行搜索
+        recursiveSearch(rootNode)
+
+        // 返回去重后的结果列表
+        return matchingFiles.distinct()
+    }
 
 }
