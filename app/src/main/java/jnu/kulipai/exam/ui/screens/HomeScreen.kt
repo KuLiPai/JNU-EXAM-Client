@@ -88,7 +88,6 @@ fun MainApp(appPrefs: AppPreferences) {
 
     val homeViewModel: HomeViewModel = viewModel() // Compose 会自动管理 ViewModel 的生命周期
 
-
     var isDarkTheme by remember { mutableStateOf(appPrefs.isNight) }
     var isAnimating by remember { mutableStateOf(false) }
     var pendingThemeChange by remember { mutableStateOf<Boolean?>(null) }
@@ -314,6 +313,7 @@ fun MainScaffold(
 
 
 //主页
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainContent(modifier: Modifier = Modifier, homeViewModel: HomeViewModel) {
@@ -376,7 +376,6 @@ fun MainContent(modifier: Modifier = Modifier, homeViewModel: HomeViewModel) {
                     ) + it.subDirs + it.files
                 }
             }
-
 
 
             Box {

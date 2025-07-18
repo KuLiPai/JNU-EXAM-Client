@@ -8,13 +8,9 @@ buildscript {
     }
 }
 
-// 在这里添加统一的依赖解决策略
-// 这个块应该放在你的 project-level build.gradle 文件中，与 buildscript 和 allprojects/subprojects 同级
 subprojects {
     configurations.all {
         resolutionStrategy {
-            // 强制统一 javapoet 的版本。
-            // Dagger Hilt 2.56.2 内部依赖的 javapoet 通常是 1.13.0 或 1.12.1。
             force("com.squareup.javapoet:javapoet:1.13.0")
         }
     }

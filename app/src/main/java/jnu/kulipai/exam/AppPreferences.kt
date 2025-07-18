@@ -9,6 +9,7 @@ import javax.inject.Inject
 
 //封装就封装，第一次封装Preferences，感觉完全不用吧
 //或许能提高代码可读性，或许并没有
+//完全需要，当时做的真对，代码干净了许多
 class AppPreferences @Inject constructor(
     @ApplicationContext private val context: Context // Hilt 可以提供 ApplicationContext
 ) {

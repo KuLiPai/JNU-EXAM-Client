@@ -8,6 +8,7 @@ import jnu.kulipai.exam.util.Api
 import jnu.kulipai.exam.util.FileManager
 import javax.inject.Singleton
 
+//哈哈ai写的，我还是第一次用这个hilt管理context，然后在单例中注入这个hilt呢
 @Module
 @InstallIn(SingletonComponent::class) // 这个 Module 的生命周期与应用的 SingletonComponent 相同
 class AppModule {

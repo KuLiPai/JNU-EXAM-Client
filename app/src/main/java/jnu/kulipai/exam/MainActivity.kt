@@ -5,6 +5,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.LightMode
@@ -23,26 +25,36 @@ import androidx.compose.ui.layout.positionInRoot
 import com.setruth.themechange.components.MaskAnimActive
 import com.setruth.themechange.model.MaskAnimModel
 import dagger.hilt.android.AndroidEntryPoint
-import jnu.kulipai.exam.data.model.LoadingState
 import jnu.kulipai.exam.ui.screens.MainApp
-import jnu.kulipai.exam.util.Api
+import jnu.kulipai.exam.viewmodel.HomeViewModel
 import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 
-val pwd = mutableStateOf("/")
-var loadingState = mutableStateOf(LoadingState.Loading)
+//val pwd = mutableStateOf("/")
+//var loadingState = mutableStateOf(LoadingState.Loading)
 
 @AndroidEntryPoint // Hilt 入口点
 class MainActivity : ComponentActivity() {
+
+    // 通过 Hilt 注入 HomeViewModel
+    private val homeViewModel: HomeViewModel by viewModels()
+
+    private val exportLauncher =
+        registerForActivityResult(ActivityResultContracts.CreateDocument()) { uri ->
+            uri?.let {
+                homeViewModel.exportFileToUri(homeViewModel.exportPath, it)
+            }
+        }
+
 
     @OptIn(DelicateCoroutinesApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
+
+
+        homeViewModel.exportLauncher = exportLauncher
         val appPrefs = AppPreferences(applicationContext)
 
         setContent {
@@ -68,20 +80,15 @@ class MainActivity : ComponentActivity() {
         //拦截返回，细节但很实用，（可能不算细节）
         //有bug，如果用户退出在打开，就无法拦截了
         //todo 加那个第一次启动监听，或者其他方法
+        //7.18号，看不懂to do在说什么，而且发现功能失效了，无语了
+        //7.18感谢ai，竟然之前悄悄的在我homeViewModel里加了方法
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                if (pwd.value != "/") {
-
-                    GlobalScope.launch {
-                        loadingState.value = LoadingState.Step
-                        delay(250)
-                        pwd.value = Api.DotDot(pwd.value)
-                        loadingState.value = LoadingState.Loaded
-                    }
+                if (homeViewModel.currentPath.value != "/") {
+                    homeViewModel.handleBackPress()
                 } else {
-                    // 放行
-                    isEnabled = false  // 允许默认行为
-                    onBackPressedDispatcher.onBackPressed() // 手动触发默认返回
+                    isEnabled = false // 禁用当前的 OnBackPressedCallback
+                    onBackPressedDispatcher.onBackPressed() // 触发默认的返回行为
                 }
             }
         })

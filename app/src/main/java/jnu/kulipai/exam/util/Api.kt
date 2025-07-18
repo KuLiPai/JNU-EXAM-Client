@@ -4,42 +4,18 @@ import android.content.Context
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.Call
+import okhttp3.Callback
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import java.io.IOException
-import okhttp3.Callback
 import java.io.File
 import java.io.FileOutputStream
+import java.io.IOException
 import java.io.InputStream
 
-//data class Link(
-//    val self: String,
-//    val git: String,
-//    val html: String
-//)
-//
-////原本想用kotlin强大json反序列化，但是要导包
-////不对我喜欢org.json
-//data class FileItem(
-//    val name: String,
-//    val path: String,
-//    val sha: String,
-//    val size: Int,
-//    val url: String,
-//    @SerialName("html_url")
-//    val htmlUrl: String,
-//    @SerialName("git_url")
-//    val gitUrl: String,
-//    @SerialName("download_url")
-//    val downloadUrl: String? = null,
-//    val type: String,
-//    @SerialName("_links")
-//    val links: Link
-//)
-
-
 object Api {
+
+
 //    fun parseFileItems(jsonString: String): List<FileItem> {
 //        val list = mutableListOf<FileItem>()
 //        val jsonArray = JSONArray(jsonString)
@@ -85,8 +61,6 @@ object Api {
 //            }
 //        )
 //    }
-
-
 
 
     //没活了就..一下吧.............

@@ -17,8 +17,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -36,6 +39,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -44,15 +48,31 @@ import jnu.kulipai.exam.R
 import jnu.kulipai.exam.data.model.DownLoadState
 import jnu.kulipai.exam.data.model.FileItem
 import jnu.kulipai.exam.util.Api
+import jnu.kulipai.exam.util.FileManager
 import jnu.kulipai.exam.viewmodel.HomeViewModel
+
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun FileCard(item: FileItem, homeViewModel: HomeViewModel) { // 接收 ViewModel
-    var downloadState by remember { mutableStateOf(DownLoadState.None) }
+fun FileCard(item: FileItem, homeViewModel: HomeViewModel) { // 接收 FileItem 和 HomeViewModel
+
+    val context = LocalContext.current
+    var downloadState by remember(item.path) { // key 设为 item.path，确保文件路径改变时重置状态
+        mutableStateOf(
+            if (FileManager.exists(context, item.path)) { // 使用 LocalContext.current
+                DownLoadState.Downloaded
+            } else {
+                DownLoadState.None
+            }
+        )
+    }
+
     var expanded by remember { mutableStateOf(false) }
 
-    val angle by animateFloatAsState(targetValue = if (expanded) 180f else 0f, animationSpec = tween(durationMillis = 300))
+    val angle by animateFloatAsState(
+        targetValue = if (expanded) 180f else 0f,
+        animationSpec = tween(durationMillis = 300)
+    )
 
     OutlinedCard(
         modifier = Modifier
@@ -94,8 +114,28 @@ fun FileCard(item: FileItem, homeViewModel: HomeViewModel) { // 接收 ViewModel
             }
             AnimatedVisibility(
                 visible = expanded,
-                enter = expandVertically(animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)) + fadeIn(animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessLow)),
-                exit = shrinkVertically(animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMedium)) + fadeOut(animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessLow))
+                enter = expandVertically(
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessLow
+                    )
+                ) + fadeIn(
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioNoBouncy,
+                        stiffness = Spring.StiffnessLow
+                    )
+                ),
+                exit = shrinkVertically(
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioNoBouncy,
+                        stiffness = Spring.StiffnessMedium
+                    )
+                ) + fadeOut(
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioNoBouncy,
+                        stiffness = Spring.StiffnessLow
+                    )
+                )
             ) {
                 Column {
                     HorizontalDivider(modifier = Modifier.padding(24.dp, 0.dp))
@@ -119,30 +159,76 @@ fun FileCard(item: FileItem, homeViewModel: HomeViewModel) { // 接收 ViewModel
                                 .padding(0.dp, 16.dp, 0.dp, 0.dp),
                             horizontalArrangement = Arrangement.End
                         ) {
-                            ElevatedButton(
-                                onClick = { /* 预览逻辑 */ },
-                                contentPadding = PaddingValues(start = 16.dp, top = 6.dp, end = 16.dp, bottom = 6.dp)
-                            ) {
-                                Icon(painter = painterResource(R.drawable.visibility_24px), contentDescription = null)
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text("预览")
+
+                            //导出文件
+                            if (downloadState== DownLoadState.Downloaded) {
+                                ElevatedButton(
+                                    onClick = {
+                                        homeViewModel.exportFile(item.path)
+                                    },
+                                    contentPadding = PaddingValues(
+                                        start = 16.dp,
+                                        top = 6.dp,
+                                        end = 16.dp,
+                                        bottom = 6.dp
+                                    )
+                                ) {
+                                    Text("导出文件")
+                                }
+                                Spacer(modifier = Modifier.width(8.dp))
                             }
-                            Spacer(modifier = Modifier.width(8.dp))
+
+                            //pdf预览
+                            if (item.name.substringAfterLast(".") == "pdf") {
+                                ElevatedButton(
+                                    onClick = { /* 预览逻辑 */ },
+                                    contentPadding = PaddingValues(
+                                        start = 16.dp,
+                                        top = 6.dp,
+                                        end = 16.dp,
+                                        bottom = 6.dp
+                                    )
+                                ) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.visibility_24px),
+                                        contentDescription = null
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("预览")
+                                }
+                                Spacer(modifier = Modifier.width(8.dp))
+                            }
+
+
                             Button(
                                 onClick = {
-                                    // 调用 ViewModel 中的下载方法
-                                    homeViewModel.downloadFile(item) { state ->
-                                        downloadState = state // 更新 Composable 内部的下载状态
+                                    if (downloadState== DownLoadState.None) {
+                                        // 直接调用 ViewModel 中的下载方法
+                                        homeViewModel.downloadFile(item) { state ->
+                                            downloadState = state // 更新 Composable 内部的下载状态
+                                        }
+                                    }else if (downloadState== DownLoadState.Downloaded) {
+                                        // 打开
+                                        homeViewModel.openFileWithOtherApp(item.path)
                                     }
                                 },
-                                contentPadding = PaddingValues(start = 16.dp, top = 6.dp, end = 16.dp, bottom = 6.dp)
+                                contentPadding = PaddingValues(
+                                    start = 16.dp,
+                                    top = 6.dp,
+                                    end = 16.dp,
+                                    bottom = 6.dp
+                                )
                             ) {
                                 when (downloadState) {
                                     DownLoadState.None -> {
-                                        Icon(painter = painterResource(R.drawable.download_24px), contentDescription = null)
+                                        Icon(
+                                            painter = painterResource(R.drawable.download_24px),
+                                            contentDescription = null
+                                        )
                                         Spacer(modifier = Modifier.width(4.dp))
                                         Text("下载")
                                     }
+
                                     DownLoadState.DownLoading -> {
                                         LoadingIndicator(
                                             color = MaterialTheme.colorScheme.onPrimary,
@@ -153,13 +239,19 @@ fun FileCard(item: FileItem, homeViewModel: HomeViewModel) { // 接收 ViewModel
                                         Spacer(modifier = Modifier.width(4.dp))
                                         Text("下载中")
                                     }
+
                                     DownLoadState.Downloaded -> {
-                            //                                    Icon(painter = painterResource(R.drawable.download_done_24px), contentDescription = null)
+                                        Icon(
+
+                                            Icons.Default.Share,
+                                            modifier = Modifier.size(20.dp),
+                                            contentDescription = null
+                                        )
                                         Spacer(modifier = Modifier.width(4.dp))
-                                        Text("已下载")
+                                        Text("打开")
                                     }
+
                                     DownLoadState.Err -> {
-                            //                                    Icon(painter = painterResource(R.drawable.error_24px), contentDescription = null)
                                         Spacer(modifier = Modifier.width(4.dp))
                                         Text("下载失败")
                                     }

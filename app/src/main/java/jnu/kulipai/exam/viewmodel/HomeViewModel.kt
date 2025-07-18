@@ -1,7 +1,15 @@
 package jnu.kulipai.exam.viewmodel
 
+import android.app.Activity
 import android.app.Application
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.webkit.MimeTypeMap
 import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -17,9 +25,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.io.File
+import java.io.FileInputStream
+import java.io.OutputStream
 import java.time.LocalDate
 import javax.inject.Inject
 
+//哇好像很方便，在一个地方统一管理需要context的函数
+//用流来管理全局变量，神奇的感觉:))))))
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val fileRepository: FileRepository,
@@ -27,6 +40,8 @@ class HomeViewModel @Inject constructor(
     private val application: Application // Hilt 可以注入 Application Context
 ) : ViewModel() {
 
+    lateinit var exportLauncher: ActivityResultLauncher<String>
+    lateinit var exportPath: String
 
     private var _isSearch = MutableStateFlow(false)
     var isSearch = _isSearch.asStateFlow()
@@ -66,8 +81,6 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             _loadingState.value = LoadingState.Loading
             try {
-                Toast.makeText(application, "加载", Toast.LENGTH_SHORT).show()
-
                 _root.value = fileRepository.getDirectoryTree(application) // 传入 application context
                 _loadingState.value = LoadingState.Loaded
             } catch (e: Exception) {
@@ -147,4 +160,87 @@ class HomeViewModel @Inject constructor(
             }
         }
     }
+
+
+    fun openFileWithOtherApp(relativePath: String) {
+        val file = File(application.filesDir, relativePath)
+        if (!file.exists()) {
+            throw IllegalArgumentException("File does not exist: $relativePath")
+        }
+
+        val extension = file.extension.lowercase()
+        val fallbackMimeTypes = mapOf(
+            "md" to "text/plain",
+            "markdown" to "text/plain",
+            "lua" to "text/plain",
+            "log" to "text/plain",
+            "json" to "application/json",
+            "xml" to "text/xml",
+            "csv" to "text/csv"
+        )
+
+        val mimeType = MimeTypeMap.getSingleton()
+            .getMimeTypeFromExtension(extension)
+            ?: fallbackMimeTypes[extension]
+            ?: "application/octet-stream"
+
+        val uri: Uri = FileProvider.getUriForFile(
+            application,
+            "${application.packageName}.fileprovider",
+            file
+        )
+
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            setDataAndType(uri, mimeType)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) // ✅ 必须加，因是 application context
+        }
+
+        val chooser = Intent.createChooser(intent, "选择应用打开文件").apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) // ✅ Chooser 也加
+        }
+
+        try {
+            application.startActivity(chooser)
+        } catch (e: Exception) {
+            Toast.makeText(application,"找不到应用打开此文件，路径: $relativePath，类型: $mimeType",Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    fun exportFileToUri(relativePath: String, targetUri: Uri) {
+        val file = File(application.filesDir, relativePath)
+        if (!file.exists()) {
+            Toast.makeText(application, "源文件不存在: $relativePath", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        try {
+            val inputStream = FileInputStream(file)
+            val outputStream: OutputStream? = application.contentResolver.openOutputStream(targetUri)
+
+            if (outputStream == null) {
+                Toast.makeText(application, "无法打开导出目标", Toast.LENGTH_SHORT).show()
+                return
+            }
+
+            inputStream.use { input ->
+                outputStream.use { output ->
+                    input.copyTo(output)
+                }
+            }
+
+            Toast.makeText(application, "文件已成功导出", Toast.LENGTH_SHORT).show()
+
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Toast.makeText(application, "导出失败: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    fun exportFile(path: String) {
+        exportPath = path
+        exportLauncher.launch(path)
+    }
+
+
 }
