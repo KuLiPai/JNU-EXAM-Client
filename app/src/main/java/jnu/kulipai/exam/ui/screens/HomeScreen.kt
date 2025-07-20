@@ -1,5 +1,7 @@
 package jnu.kulipai.exam.ui.screens
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.SizeTransform
@@ -50,22 +52,23 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.annotation.RootGraph
+import com.ramcosta.composedestinations.generated.destinations.SettingScreenDestination
+import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.setruth.themechange.components.MaskAnimActive
 import com.setruth.themechange.components.MaskBox
-import jnu.kulipai.exam.AppPreferences
 import jnu.kulipai.exam.R
 import jnu.kulipai.exam.ThemeToggleButton
 import jnu.kulipai.exam.components.FileCard
@@ -74,7 +77,7 @@ import jnu.kulipai.exam.data.model.DirNode
 import jnu.kulipai.exam.data.model.FileItem
 import jnu.kulipai.exam.data.model.LoadingState
 import jnu.kulipai.exam.data.model.ThemeState
-import jnu.kulipai.exam.ui.theme.期末无挂Theme
+import jnu.kulipai.exam.ui.anim.AnimatedNavigation
 import jnu.kulipai.exam.util.FileManager
 import jnu.kulipai.exam.viewmodel.HomeViewModel
 import kotlinx.coroutines.CoroutineScope
@@ -83,12 +86,34 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-
 //这里有笼罩动画，状态栏
+@Destination<RootGraph>(start = true, style = AnimatedNavigation::class)
 @Composable
-fun MainApp(appPrefs: AppPreferences, homeViewModel: HomeViewModel, navController: NavController) {
+fun MainApp(
+    viewModel: HomeViewModel = hiltViewModel(), // woq，可以直接注入这个viewModel，我之前还傻乎乎的传参数
+    navigator: DestinationsNavigator
+) {
 
+
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/plain")) { uri ->
+        uri?.let {
+            viewModel.exportFileToUri(viewModel.exportPath, it)
+        }
+    }
+
+    // 设置 launcher 给 ViewModel
+    LaunchedEffect(Unit) {
+        viewModel.setExportLauncher(launcher)
+    }
+    // wow 这个单例原来可以哦哦，对的
+    // 单例然后保存到viewModel然后就获取然后就唯一的
+    // 全局的!
+    val appPrefs = viewModel.appPre
     // 初始化一次
+
+    // 这个好乱，我问ai怎么优化代码，他让我再写一个类就写一个配置一行代码，我说能不能写进viewModel
+    // ai说x，要写进一个新文件，
+    // 我说f**k(
     LaunchedEffect(Unit) {
         ThemeState.isDark = appPrefs.isNight
     }
@@ -115,19 +140,19 @@ fun MainApp(appPrefs: AppPreferences, homeViewModel: HomeViewModel, navControlle
             isAnimating = false
         }
     ) { maskAnimActiveEvent ->
-            MainScaffold(
-                isDarkTheme = isDarkTheme,
-                isAnimating = isAnimating,
-                homeViewModel = homeViewModel,
-                onThemeToggle = { animModel, x, y ->
-                    if (!isAnimating) {
-                        isAnimating = true
-                        pendingThemeChange = !ThemeState.isDark
-                        maskAnimActiveEvent(animModel, x, y)
-                    }
-                },
-                navController = navController,
-            )
+        MainScaffold(
+            isDarkTheme = isDarkTheme,
+            isAnimating = isAnimating,
+            homeViewModel = viewModel,
+            onThemeToggle = { animModel, x, y ->
+                if (!isAnimating) {
+                    isAnimating = true
+                    pendingThemeChange = !ThemeState.isDark
+                    maskAnimActiveEvent(animModel, x, y)
+                }
+            },
+            navController = navigator,
+        )
     }
 }
 
@@ -141,12 +166,12 @@ fun MainScaffold(
     isAnimating: Boolean,
     homeViewModel: HomeViewModel, // 接收 ViewModel
     onThemeToggle: MaskAnimActive,
-    navController: NavController
+    navController: DestinationsNavigator
 ) {
 
     val pwd = homeViewModel.currentPath.collectAsState()
     val searchText = homeViewModel.searchText.collectAsState()
-    val isSearch = homeViewModel.isSearch.collectAsState()
+    homeViewModel.isSearch.collectAsState()
     val focusManager = LocalFocusManager.current
     val focusRequester = remember { FocusRequester() }
 
@@ -232,7 +257,7 @@ fun MainScaffold(
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             IconButton(onClick = {
-                                navController.navigate("set")
+                                navController.navigate(SettingScreenDestination)
                             }) {
                                 Icon(
                                     imageVector = Icons.Default.Settings,
@@ -251,7 +276,7 @@ fun MainScaffold(
                     value = searchText.value,
                     onValueChange = { newText ->
                         homeViewModel.setSearchText(newText)
-                       homeViewModel.setLoadingState(LoadingState.Loading)
+                        homeViewModel.setLoadingState(LoadingState.Loading)
                         homeViewModel.setisSearch(false)
 
                         searchJob?.cancel()
@@ -264,7 +289,7 @@ fun MainScaffold(
                             }
                         }
 
-                                    },
+                    },
                     placeholder = { Text("搜索") },
                     leadingIcon = {
                         Row {
@@ -315,7 +340,6 @@ fun MainScaffold(
 }
 
 
-
 //主页
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -347,7 +371,11 @@ fun MainContent(modifier: Modifier = Modifier, homeViewModel: HomeViewModel) {
             exit = fadeOut(animationSpec = tween(durationMillis = 50)),
         ) {
 
-            LottieAnimation(composition = composition, progress = { progress }, modifier = modifier.offset(y = (-128).dp))
+            LottieAnimation(
+                composition = composition,
+                progress = { progress },
+                modifier = modifier.offset(y = (-128).dp)
+            )
 
         }
 

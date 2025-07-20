@@ -13,4 +13,8 @@
     <string name="settings_about_category">关于应用</string>
     <string name="settings_about_title">关于</string>
     <string name="settings_about_summary">版本 1.0.0</string>
+
+    <string name="perf_appearance_summary">深色主题，配色方案，数板主题，日期格式…</string>
+    <string name="pref_appearance">外观</string>
+
 </resources>

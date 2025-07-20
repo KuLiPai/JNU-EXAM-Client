@@ -1,14 +1,8 @@
 plugins {
+    // 应该是设置他们不相互影响的，不设置直接炸
     alias(libs.plugins.android.application) apply false
     alias(libs.plugins.kotlin.android) apply false
     alias(libs.plugins.kotlin.compose) apply false
-    id("com.google.dagger.hilt.android") version "2.56.2" apply false
-}
-
-subprojects {
-    configurations.all {
-        resolutionStrategy {
-            force("com.squareup.javapoet:javapoet:1.13.0")
-        }
-    }
+    alias(libs.plugins.ksp) apply false
+    alias(libs.plugins.hilt) apply false
 }

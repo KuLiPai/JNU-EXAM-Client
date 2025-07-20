@@ -1,37 +1,20 @@
-buildscript {
-    repositories {
-        google()
-        mavenCentral()
-    }
-    dependencies {
-        classpath(libs.hilt.android.gradle.plugin)
-    }
-}
-
-subprojects {
-    configurations.all {
-        resolutionStrategy {
-            force("com.squareup.javapoet:javapoet:1.13.0")
-        }
-    }
-}
-
-
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    id("org.jetbrains.kotlin.kapt")
-    id("com.google.dagger.hilt.android")
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.hilt)
 }
 
 android {
     namespace = "jnu.kulipai.exam"
+    // 安卓16是Baklava，没吃过，看着像切糕？
     compileSdk = 36
 
 
     defaultConfig {
         applicationId = "jnu.kulipai.exam"
+        // 安卓9，Pie，3.14(
         minSdk = 28
         targetSdk = 36
         versionCode = 1
@@ -54,6 +37,8 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+    // 喂，都过时了还不知道改吗，
+    // ...,按照ai的直接项目炸了，不碰了
     kotlinOptions {
         jvmTarget = "17"
         freeCompilerArgs = listOf("-XXLanguage:+PropertyParamAnnotationDefaultTargetMode")
@@ -68,11 +53,14 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
+    // boom,神奇的库，用于自动更新其他的库好像，不会用:3
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
+    // m3 i like
     implementation(libs.androidx.material3)
+    // 无语，和上面的冲突，还要compileOnly不能implementation，解决了一下午，早上顿悟才解决，真是无语了
     compileOnly(libs.material3.jvmstubs)
 
     testImplementation(libs.junit)
@@ -101,13 +89,18 @@ dependencies {
     implementation(libs.bouquet)
 
     // Hilt 依赖
+    // 在compose中感觉能用上，第一次用
     implementation(libs.hilt.android)
-    kapt(libs.hilt.android.compiler)
-    implementation(libs.androidx.hilt.navigation.compose) // 使用 Compose 导航
+    ksp(libs.hilt.android.compiler)
+    implementation(libs.androidx.hilt.navigation.compose)
+
+    // destinations自动路由，路由器（
+    //wowwowow 太好用了吧，看文档晕晕的，用下来也太爽了，只能说无敌
+    implementation(libs.core)
+    ksp(libs.compose.destinations.ksp)
+
+
 
 
 }
 
-kapt {
-    correctErrorTypes = true
-}

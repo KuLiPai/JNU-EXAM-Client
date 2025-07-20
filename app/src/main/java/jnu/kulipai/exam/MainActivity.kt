@@ -7,10 +7,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -27,19 +23,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.ramcosta.composedestinations.DestinationsNavHost
+import com.ramcosta.composedestinations.generated.NavGraphs
 import com.setruth.themechange.components.MaskAnimActive
 import com.setruth.themechange.model.MaskAnimModel
 import dagger.hilt.android.AndroidEntryPoint
 import jnu.kulipai.exam.data.model.ThemeState
-import jnu.kulipai.exam.ui.screens.MainApp
-import jnu.kulipai.exam.ui.screens.SettingScreen
 import jnu.kulipai.exam.ui.theme.期末无挂Theme
+import jnu.kulipai.exam.util.d
 import jnu.kulipai.exam.viewmodel.HomeViewModel
 import kotlinx.coroutines.DelicateCoroutinesApi
 import javax.inject.Inject
@@ -60,25 +54,20 @@ class MainActivity : ComponentActivity() {
     private val homeViewModel: HomeViewModel by viewModels()
 
 
-    private val exportLauncher =
-        registerForActivityResult(ActivityResultContracts.CreateDocument()) { uri ->
-            uri?.let {
-                homeViewModel.exportFileToUri(homeViewModel.exportPath, it)
-            }
-        }
-
 
     @OptIn(DelicateCoroutinesApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        homeViewModel.exportLauncher = exportLauncher
-
-
         setContent {
             val isDarkTheme = ThemeState.isDark
+            val navController = rememberNavController()
+
+            //全局主题
             期末无挂Theme(darkTheme = isDarkTheme) {
+                // 跳转动画防止白/黑边
+                // 应该有更优雅的解决方案，累了，明天看看吧
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -100,7 +89,10 @@ class MainActivity : ComponentActivity() {
                             appPrefs
                         )
                     } else {
-                        MyApp()
+                        DestinationsNavHost(
+                            navGraph = NavGraphs.root,
+                            navController = navController,
+                        )
                     }
                 }
             }
@@ -125,63 +117,11 @@ class MainActivity : ComponentActivity() {
 
     }
 
-
-    @Composable
-    fun MyApp() {
-        val navController = rememberNavController()
-
-        NavHost(
-            navController = navController, startDestination = "main",
-            enterTransition = {
-                fadeIn(animationSpec = tween(400)) + scaleIn(
-                    animationSpec = tween(500),
-                    initialScale = 0.9f,
-                    transformOrigin = TransformOrigin.Center
-                )
-            },
-
-            exitTransition = {
-                fadeOut(animationSpec = tween(400))
-            },
-            popEnterTransition = {
-                scaleIn(
-                    animationSpec = tween(durationMillis = 500),
-                    initialScale = 0.9f,
-                    transformOrigin = TransformOrigin.Center
-                ) + fadeIn(
-                    animationSpec = tween(durationMillis = 500),
-                    initialAlpha = 0.0f // 一开始完全透明
-                )
-            },
-            popExitTransition = {
-                fadeOut(animationSpec = tween(durationMillis = 300))
-            }
-
-
-        ) {
-            composable("main") {
-                MainApp(appPrefs, homeViewModel = homeViewModel, navController = navController)
-            }
-            composable("set") {
-                SettingScreen(appPrefs, navController = navController)
-            }
-
-            // 定义带参数的路由
-//            composable(
-//                "second_screen_with_param/{message}",
-//                arguments = listOf(navArgument("message") { type = NavType.StringType })
-//            ) { backStackEntry ->
-//                val message = backStackEntry.arguments?.getString("message")
-//                SettingScreen(message = message,navController = navController)
-//            }
-        }
-    }
-
-
 }
 
 
 //夜间切换按钮
+//放到compose目录里，封装起来用
 @Composable
 fun ThemeToggleButton(
     isAnimating: Boolean,

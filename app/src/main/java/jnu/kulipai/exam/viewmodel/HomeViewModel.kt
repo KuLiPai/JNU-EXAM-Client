@@ -17,6 +17,7 @@ import jnu.kulipai.exam.data.model.FileItem
 import jnu.kulipai.exam.data.model.LoadingState
 import jnu.kulipai.exam.data.repository.FileRepository
 import jnu.kulipai.exam.util.Api
+import jnu.kulipai.exam.util.d
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -30,6 +31,7 @@ import javax.inject.Inject
 
 //哇好像很方便，在一个地方统一管理需要context的函数
 //用流来管理全局变量，神奇的感觉:))))))
+
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val fileRepository: FileRepository,
@@ -37,7 +39,12 @@ class HomeViewModel @Inject constructor(
     private val application: Application // Hilt 可以注入 Application Context
 ) : ViewModel() {
 
-    lateinit var exportLauncher: ActivityResultLauncher<String>
+    private var exportLauncher: ActivityResultLauncher<String>? = null
+    fun setExportLauncher(arl:ActivityResultLauncher<String>) {
+        exportLauncher = arl
+    }
+
+
     lateinit var exportPath: String
 
     private var _isSearch = MutableStateFlow(false)
@@ -46,6 +53,8 @@ class HomeViewModel @Inject constructor(
     fun setisSearch(bool: Boolean) {
         _isSearch.value = bool
     }
+
+    val appPre = appPreferences
 
     private var _searchText = MutableStateFlow("")
     var searchText = _searchText.asStateFlow()
@@ -236,7 +245,7 @@ class HomeViewModel @Inject constructor(
 
     fun exportFile(path: String) {
         exportPath = path
-        exportLauncher.launch(path)
+        exportLauncher?.launch(path)
     }
 
 
