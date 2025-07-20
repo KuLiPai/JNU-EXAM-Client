@@ -14,15 +14,17 @@ junitVersion = "1.2.1"
 espressoCore = "3.6.1"
 lifecycleRuntimeKtx = "2.9.1"
 activityCompose = "1.10.1"
-composeBom = "2025.06.01"
+composeBom = "2025.07.00"
 lottieComposeVersion = "6.6.7"
-material3 = "1.4.0-alpha17"
+material3 = "1.4.0-alpha18"
 materialIconsExtended = "1.7.8"
-navigationCompose = "2.9.1"
+navigationCompose = "2.9.2"
 okhttp = "5.1.0"
-material3Jvmstubs = "1.4.0-alpha17"
+material3Jvmstubs = "1.4.0-alpha18"
+materialLib = "1.12.0"
 
 [libraries]
+accompanist-navigation-animation = { module = "com.google.accompanist:accompanist-navigation-animation", version.ref = "accompanistSystemuicontroller" }
 accompanist-systemuicontroller = { module = "com.google.accompanist:accompanist-systemuicontroller", version.ref = "accompanistSystemuicontroller" }
 android-lottie-compose = { module = "com.airbnb.android:lottie-compose", version.ref = "lottieComposeVersion" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -51,7 +53,7 @@ androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit
 okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3-android", version.ref = "material3" }
 material3-jvmstubs = { group = "androidx.compose.material3", name = "material3-jvmstubs", version.ref = "material3Jvmstubs" }
-
+material3-theme = { group = "com.google.android.material", name = "material", version.ref = "materialLib" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

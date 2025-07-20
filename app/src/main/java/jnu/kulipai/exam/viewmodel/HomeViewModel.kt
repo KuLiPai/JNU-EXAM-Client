@@ -1,14 +1,11 @@
 package jnu.kulipai.exam.viewmodel
 
-import android.app.Activity
 import android.app.Application
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.webkit.MimeTypeMap
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

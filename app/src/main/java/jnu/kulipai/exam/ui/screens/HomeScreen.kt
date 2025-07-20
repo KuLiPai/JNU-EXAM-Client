@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -55,6 +56,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
@@ -71,6 +73,7 @@ import jnu.kulipai.exam.components.FolderCard
 import jnu.kulipai.exam.data.model.DirNode
 import jnu.kulipai.exam.data.model.FileItem
 import jnu.kulipai.exam.data.model.LoadingState
+import jnu.kulipai.exam.data.model.ThemeState
 import jnu.kulipai.exam.ui.theme.期末无挂Theme
 import jnu.kulipai.exam.util.FileManager
 import jnu.kulipai.exam.viewmodel.HomeViewModel
@@ -83,12 +86,14 @@ import kotlinx.coroutines.launch
 
 //这里有笼罩动画，状态栏
 @Composable
-fun MainApp(appPrefs: AppPreferences) {
+fun MainApp(appPrefs: AppPreferences, homeViewModel: HomeViewModel, navController: NavController) {
 
+    // 初始化一次
+    LaunchedEffect(Unit) {
+        ThemeState.isDark = appPrefs.isNight
+    }
 
-    val homeViewModel: HomeViewModel = viewModel() // Compose 会自动管理 ViewModel 的生命周期
-
-    var isDarkTheme by remember { mutableStateOf(appPrefs.isNight) }
+    val isDarkTheme = ThemeState.isDark
     var isAnimating by remember { mutableStateOf(false) }
     var pendingThemeChange by remember { mutableStateOf<Boolean?>(null) }
     val systemUiController = rememberSystemUiController()
@@ -97,13 +102,12 @@ fun MainApp(appPrefs: AppPreferences) {
         systemUiController.setSystemBarsColor(color = Color.Transparent, darkIcons = !isDarkTheme)
     }
 
-    //mask的动画很强，贵州kug的人就是强
     MaskBox(
         animTime = 1500L,
         maskComplete = {
             pendingThemeChange?.let { newTheme ->
-                isDarkTheme = newTheme
-                appPrefs.isNight = isDarkTheme
+                ThemeState.isDark = newTheme
+                appPrefs.isNight = newTheme
                 pendingThemeChange = null
             }
         },
@@ -111,8 +115,6 @@ fun MainApp(appPrefs: AppPreferences) {
             isAnimating = false
         }
     ) { maskAnimActiveEvent ->
-        //有点无语，中文名，但是自动生成的懒得改
-        期末无挂Theme(darkTheme = isDarkTheme) {
             MainScaffold(
                 isDarkTheme = isDarkTheme,
                 isAnimating = isAnimating,
@@ -120,12 +122,12 @@ fun MainApp(appPrefs: AppPreferences) {
                 onThemeToggle = { animModel, x, y ->
                     if (!isAnimating) {
                         isAnimating = true
-                        pendingThemeChange = !isDarkTheme
+                        pendingThemeChange = !ThemeState.isDark
                         maskAnimActiveEvent(animModel, x, y)
                     }
-                }
+                },
+                navController = navController,
             )
-        }
     }
 }
 
@@ -139,6 +141,7 @@ fun MainScaffold(
     isAnimating: Boolean,
     homeViewModel: HomeViewModel, // 接收 ViewModel
     onThemeToggle: MaskAnimActive,
+    navController: NavController
 ) {
 
     val pwd = homeViewModel.currentPath.collectAsState()
@@ -224,12 +227,13 @@ fun MainScaffold(
                             //别忘了路径过长隐藏一些按钮，
                             //好吧忘了，不对懒了
                             ThemeToggleButton(
-                                isDarkTheme = isDarkTheme,
                                 isAnimating = isAnimating,
                                 onThemeToggle = onThemeToggle
                             )
                             Spacer(modifier = Modifier.width(4.dp))
-                            IconButton(onClick = {}) {
+                            IconButton(onClick = {
+                                navController.navigate("set")
+                            }) {
                                 Icon(
                                     imageVector = Icons.Default.Settings,
                                     contentDescription = null,
@@ -318,7 +322,6 @@ fun MainScaffold(
 @Composable
 fun MainContent(modifier: Modifier = Modifier, homeViewModel: HomeViewModel) {
 
-    AppPreferences(LocalContext.current) // 如果 appPrefs 还在 Composable 中被直接使用，需要这样获取
     val loadingState = homeViewModel.loadingState.collectAsState() // 从 ViewModel 收集 loadingState
     val pwd = homeViewModel.currentPath.collectAsState() // 从 ViewModel 收集 loadingState
     val root = homeViewModel.root.collectAsState() // 从 ViewModel 收集 loadingState
@@ -344,7 +347,7 @@ fun MainContent(modifier: Modifier = Modifier, homeViewModel: HomeViewModel) {
             exit = fadeOut(animationSpec = tween(durationMillis = 50)),
         ) {
 
-            LottieAnimation(composition = composition, progress = { progress })
+            LottieAnimation(composition = composition, progress = { progress }, modifier = modifier.offset(y = (-128).dp))
 
         }
 
