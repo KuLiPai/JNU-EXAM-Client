@@ -25,3 +25,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "期末无挂"
 include(":app")
+include(":Color-Picker")

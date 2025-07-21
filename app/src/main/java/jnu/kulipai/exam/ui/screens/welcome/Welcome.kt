@@ -1,4 +1,4 @@
-package jnu.kulipai.exam
+package jnu.kulipai.exam.ui.screens.welcome
 
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.ExperimentalAnimationApi
@@ -56,6 +56,8 @@ import com.airbnb.lottie.compose.rememberLottieComposition
 import com.github.compose.waveloading.DrawType
 import com.github.compose.waveloading.WaveLoading
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import jnu.kulipai.exam.AppPreferences
+import jnu.kulipai.exam.R
 import jnu.kulipai.exam.ui.theme.期末无挂Theme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

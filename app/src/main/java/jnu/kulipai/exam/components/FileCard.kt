@@ -44,17 +44,25 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.ramcosta.composedestinations.generated.destinations.PdfScreenDestination
+import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import jnu.kulipai.exam.R
 import jnu.kulipai.exam.data.model.DownLoadState
 import jnu.kulipai.exam.data.model.FileItem
+import jnu.kulipai.exam.ui.screens.home.HomeViewModel
 import jnu.kulipai.exam.util.Api
+import jnu.kulipai.exam.util.Cache
 import jnu.kulipai.exam.util.FileManager
-import jnu.kulipai.exam.viewmodel.HomeViewModel
+import java.io.File
 
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun FileCard(item: FileItem, homeViewModel: HomeViewModel) { // 接收 FileItem 和 HomeViewModel
+fun FileCard(
+    item: FileItem,
+    homeViewModel: HomeViewModel,
+    navController: DestinationsNavigator
+) { // 接收 FileItem 和 HomeViewModel
 
     val context = LocalContext.current
     var downloadState by remember(item.path) { // key 设为 item.path，确保文件路径改变时重置状态
@@ -161,7 +169,7 @@ fun FileCard(item: FileItem, homeViewModel: HomeViewModel) { // 接收 FileItem 
                         ) {
 
                             //导出文件
-                            if (downloadState== DownLoadState.Downloaded) {
+                            if (downloadState == DownLoadState.Downloaded) {
                                 ElevatedButton(
                                     onClick = {
                                         homeViewModel.exportFile(item.path)
@@ -179,9 +187,13 @@ fun FileCard(item: FileItem, homeViewModel: HomeViewModel) { // 接收 FileItem 
                             }
 
                             //pdf预览
-                            if (item.name.substringAfterLast(".") == "pdf") {
+                            if (item.name.substringAfterLast(".") == "pdf" && downloadState == DownLoadState.Downloaded) {
                                 ElevatedButton(
-                                    onClick = { /* 预览逻辑 */ },
+                                    onClick = {
+                                        Cache.currentFile = File(context.filesDir, item.path)
+                                        Cache.currentName = item.name
+                                        navController.navigate(PdfScreenDestination)
+                                    },
                                     contentPadding = PaddingValues(
                                         start = 16.dp,
                                         top = 6.dp,
@@ -202,12 +214,12 @@ fun FileCard(item: FileItem, homeViewModel: HomeViewModel) { // 接收 FileItem 
 
                             Button(
                                 onClick = {
-                                    if (downloadState== DownLoadState.None) {
+                                    if (downloadState == DownLoadState.None) {
                                         // 直接调用 ViewModel 中的下载方法
                                         homeViewModel.downloadFile(item) { state ->
                                             downloadState = state // 更新 Composable 内部的下载状态
                                         }
-                                    }else if (downloadState== DownLoadState.Downloaded) {
+                                    } else if (downloadState == DownLoadState.Downloaded) {
                                         // 打开
                                         homeViewModel.openFileWithOtherApp(item.path)
                                     }

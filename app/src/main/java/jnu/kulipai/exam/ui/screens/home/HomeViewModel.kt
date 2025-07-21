@@ -1,4 +1,4 @@
-package jnu.kulipai.exam.viewmodel
+package jnu.kulipai.exam.ui.screens.home
 
 import android.app.Application
 import android.content.Intent
@@ -16,8 +16,9 @@ import jnu.kulipai.exam.data.model.DownLoadState
 import jnu.kulipai.exam.data.model.FileItem
 import jnu.kulipai.exam.data.model.LoadingState
 import jnu.kulipai.exam.data.repository.FileRepository
+import jnu.kulipai.exam.ui.theme.ThemeSettingsManager
 import jnu.kulipai.exam.util.Api
-import jnu.kulipai.exam.util.d
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -36,14 +37,26 @@ import javax.inject.Inject
 class HomeViewModel @Inject constructor(
     private val fileRepository: FileRepository,
     private val appPreferences: AppPreferences,
-    private val application: Application // Hilt 可以注入 Application Context
-) : ViewModel() {
+    private val application: Application, // Hilt 可以注入 Application Context
+    private val themeSettingsManager: ThemeSettingsManager,
+
+    ) : ViewModel() {
+
+
+        var currentFile = MutableStateFlow(File("/"))
+
+
+    val darkTheme = themeSettingsManager.darkTheme
+
+    fun updateDarkTheme(value: Int) =
+        viewModelScope.launch(Dispatchers.IO) {
+            themeSettingsManager.setDarkTheme(value)
+        }
 
     private var exportLauncher: ActivityResultLauncher<String>? = null
-    fun setExportLauncher(arl:ActivityResultLauncher<String>) {
+    fun setExportLauncher(arl: ActivityResultLauncher<String>) {
         exportLauncher = arl
     }
-
 
     lateinit var exportPath: String
 
@@ -121,7 +134,7 @@ class HomeViewModel @Inject constructor(
         } else {
             // 如果在根目录，可以考虑关闭应用或者不作处理，具体取决于需求
             // 注意：在 ViewModel 中不应该直接调用 finish()，而是通过事件回调通知 UI
-            Toast.makeText(application, "已经在根目录啦", Toast.LENGTH_SHORT).show()
+//            Toast.makeText(application, "已经在根目录啦", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -209,7 +222,10 @@ class HomeViewModel @Inject constructor(
         try {
             application.startActivity(chooser)
         } catch (e: Exception) {
-            Toast.makeText(application,"找不到应用打开此文件，路径: $relativePath，类型: $mimeType",Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                application, "找不到应用打开此文件，路径: $relativePath，类型: $mimeType",
+                Toast.LENGTH_SHORT
+            ).show()
         }
     }
 
@@ -222,7 +238,8 @@ class HomeViewModel @Inject constructor(
 
         try {
             val inputStream = FileInputStream(file)
-            val outputStream: OutputStream? = application.contentResolver.openOutputStream(targetUri)
+            val outputStream: OutputStream? =
+                application.contentResolver.openOutputStream(targetUri)
 
             if (outputStream == null) {
                 Toast.makeText(application, "无法打开导出目标", Toast.LENGTH_SHORT).show()

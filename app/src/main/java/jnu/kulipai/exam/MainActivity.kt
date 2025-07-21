@@ -5,42 +5,37 @@ import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.DarkMode
-import androidx.compose.material.icons.filled.LightMode
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.graphics.Color
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.rememberNavController
+import com.materialkolor.PaletteStyle
 import com.ramcosta.composedestinations.DestinationsNavHost
 import com.ramcosta.composedestinations.generated.NavGraphs
-import com.setruth.themechange.components.MaskAnimActive
-import com.setruth.themechange.model.MaskAnimModel
 import dagger.hilt.android.AndroidEntryPoint
-import jnu.kulipai.exam.data.model.ThemeState
+import jnu.kulipai.exam.ui.screens.home.HomeViewModel
+import jnu.kulipai.exam.ui.screens.welcome.WelcomeApp
 import jnu.kulipai.exam.ui.theme.期末无挂Theme
-import jnu.kulipai.exam.util.d
-import jnu.kulipai.exam.viewmodel.HomeViewModel
 import kotlinx.coroutines.DelicateCoroutinesApi
 import javax.inject.Inject
 
-
-//val pwd = mutableStateOf("/")
-//var loadingState = mutableStateOf(LoadingState.Loading)
+// 7.21 0:30
+// 总结一下
+// 首先是文件 一个页面一个文件夹，有screen，子页面，viewModel
+// 有@hilt的viewModel 在@compose中用hiltviewModel获取
+// 有一个全局的主题单例，在其他的viewModel中获取以及修改
+// 改主题配置，适配新主题和背景外的背景主题色
+// 睡觉
 
 @AndroidEntryPoint // Hilt 入口点
 class MainActivity : ComponentActivity() {
@@ -51,21 +46,39 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var appPrefs: AppPreferences
 
-    private val homeViewModel: HomeViewModel by viewModels()
-
-
-
     @OptIn(DelicateCoroutinesApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
         setContent {
-            val isDarkTheme = ThemeState.isDark
             val navController = rememberNavController()
 
+            val mainViewModel: MainActivityViewModel = hiltViewModel()
+
+            /// 哈哈，没事就是笑笑
+            val dynamicColors by mainViewModel.dc.collectAsStateWithLifecycle(isSystemInDarkTheme())
+            val darkTheme by mainViewModel.darkTheme.collectAsStateWithLifecycle(0)
+            val amoledBlack by mainViewModel.amoledBlack.collectAsStateWithLifecycle(false)
+//            val firstLaunch by mainViewModel.firstLaunch.collectAsStateWithLifecycle(false)
+            val colorSeed by mainViewModel.colorSeed.collectAsStateWithLifecycle(initialValue = Color.Red)
+            val paletteStyle by mainViewModel.paletteStyle.collectAsStateWithLifecycle(initialValue = PaletteStyle.TonalSpot)
+//            val autoUpdateChannel by mainViewModel.autoUpdateChannel.collectAsStateWithLifecycle(UpdateChannel.Disabled)
+//            val updateDismissedName by mainViewModel.updateDismissedName.collectAsStateWithLifecycle("")
+
+
             //全局主题
-            期末无挂Theme(darkTheme = isDarkTheme) {
+            期末无挂Theme(
+                darkTheme = when (darkTheme) {
+                    1 -> false
+                    2 -> true
+                    else -> isSystemInDarkTheme()
+                },
+                dynamicColor = dynamicColors,
+                amoled = amoledBlack,
+                colorSeed = colorSeed,
+                paletteStyle = paletteStyle
+            ) {
                 // 跳转动画防止白/黑边
                 // 应该有更优雅的解决方案，累了，明天看看吧
                 Box(
@@ -103,16 +116,16 @@ class MainActivity : ComponentActivity() {
         //todo 加那个第一次启动监听，或者其他方法
         //7.18号，看不懂to do在说什么，而且发现功能失效了，无语了
         //7.18感谢ai，竟然之前悄悄的在我homeViewModel里加了方法
-        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() {
-                if (homeViewModel.currentPath.value != "/") {
-                    homeViewModel.handleBackPress()
-                } else {
-                    isEnabled = false // 禁用当前的 OnBackPressedCallback
-                    onBackPressedDispatcher.onBackPressed() // 触发默认的返回行为
-                }
-            }
-        })
+//        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+//            override fun handleOnBackPressed() {
+//                if (homeViewModel.currentPath.value != "/") {
+//                    homeViewModel.handleBackPress()
+//                } else {
+//                    isEnabled = false // 禁用当前的 OnBackPressedCallback
+//                    onBackPressedDispatcher.onBackPressed() // 触发默认的返回行为
+//                }
+//            }
+//        })
 
 
     }
@@ -120,33 +133,3 @@ class MainActivity : ComponentActivity() {
 }
 
 
-//夜间切换按钮
-//放到compose目录里，封装起来用
-@Composable
-fun ThemeToggleButton(
-    isAnimating: Boolean,
-    onThemeToggle: MaskAnimActive
-) {
-    var buttonPosition by remember { mutableStateOf(Offset.Zero) }
-    val isDarkTheme = ThemeState.isDark
-
-    IconButton(
-        onClick = {
-            if (isAnimating) return@IconButton
-            onThemeToggle(MaskAnimModel.EXPEND, buttonPosition.x, buttonPosition.y)
-        },
-        modifier = Modifier.onGloballyPositioned { coordinates ->
-            val position = coordinates.positionInRoot()
-            buttonPosition = Offset(
-                x = position.x + coordinates.size.width / 2f,
-                y = position.y + coordinates.size.height / 2f
-            )
-        }
-    ) {
-        Icon(
-            imageVector = if (isDarkTheme) Icons.Default.DarkMode else Icons.Default.LightMode,
-            contentDescription = if (isDarkTheme) "切换到亮色模式" else "切换到暗色模式",
-            tint = MaterialTheme.colorScheme.onSurface
-        )
-    }
-}

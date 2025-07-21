@@ -14,7 +14,123 @@
     <string name="settings_about_title">关于</string>
     <string name="settings_about_summary">版本 1.0.0</string>
 
-    <string name="perf_appearance_summary">深色主题，配色方案，数板主题，日期格式…</string>
+    <string name="color_picker_title">选择一种颜色</string>
+
+
+    <string name="action_cancel">取消</string>
+    <string name="action_confirm">确定</string>
+    <string name="action_delete">删除</string>
+
+
+    <string name="more_title">更多</string>
+
     <string name="pref_appearance">外观</string>
+    <string name="pref_dark_theme">深色主题</string>
+    <string name="pref_dark_theme_off">关闭</string>
+    <string name="pref_dark_theme_on">开启</string>
+    <string name="theme_yellow">黄色</string>
+    <string name="pref_app_theme">应用主题</string>
+    <string name="theme_peach">桃红</string>
+    <string name="theme_lavender">淡紫色</string>
+    <string name="theme_black_and_white">黑白</string>
+    <string name="pref_pure_black">纯黑色深色主题</string>
+
+
+    <string name="pref_app_language">应用语言</string>
+    <string name="label_default">默认</string>
+    <string name="about_version">版本</string>
+    <string name="onboard_title">欢迎</string>
+    <string name="action_start">开始</string>
+
+
+    <string name="time">时间</string>
+
+
+    <string name="page_previous">上一个</string>
+    <string name="dialog_ok">好的</string>
+
+    <string name="libraries_licenses_title">开源许可证</string>
+
+    <string name="action_save">保存</string>
+    <string name="custom_sudoku_delete_dialog_text">您确定要删除选定的数独吗？此操作不能撤消</string>
+    <string name="custom_sudoku_delete_dialog_title">删除所选内容</string>
+
+
+    <string name="sort_ascending">升序</string>
+    <string name="folder_name">文件夹名：%1$s</string>
+    <string name="delete_folder">删除文件夹</string>
+    <string name="title_folders">文件夹</string>
+    <string name="folder_import">导入</string>
+    <string name="create_folder_name">文件夹名</string>
+    <string name="export">导出</string>
+    <string name="edit_name">编辑名称</string>
+
+    <string name="pref_boardtheme_accent">使用强调色</string>
+
+
+    <string name="theme_blue">蓝色</string>
+    <string name="pref_date_format_custom_textfield_label">模式</string>
+    <string name="pref_date_format_custom_label">自定义</string>
+
+    <string name="help">帮助</string>
+
+    <string name="filter_not_started">未开始</string>
+    <string name="game_not_started">未开始</string>
+    <string name="create_import_set">设置</string>
+
+    <string name="difficulty_unspecified">未指定</string>
+    <string name="action_continue">继续</string>
+    <string name="type_unspecified">未指定</string>
+    <string name="about_title">关于</string>
+    <string name="difficulty_custom">自定义</string>
+    <string name="action_deleted">已删除</string>
+    <string name="pref_dark_theme_follow">跟随系统</string>
+
+    <string name="pref_input">输入方法</string>
+    <string name="theme_dynamic">动态</string>
+    <string name="theme_green">绿色</string>
+
+
+    <string name="pref_position_lines">定位线</string>
+    <string name="pref_other">其他</string>
+    <string name="dialog_yes">是的</string>
+    <string name="dialog_no">不是</string>
+
+
+    <string name="first_game_dialog_got_it">明白了</string>
+    <string name="action_exit">退出</string>
+
+    <string name="backup_option_settings">设置</string>
+    <string name="date_started">开始日期</string>
+    <string name="save_backup_success">备份已保存</string>
+    <string name="action_grant">获取</string>
+    <string name="autobackup_never">从不</string>
+    <string name="restore_existing_data_alert">现有的数据将会被删除！</string>
+    <string name="onboard_settings_description">根据您的喜好调整应用程序</string>
+    <string name="theme_custom">自定义</string>
+    <string name="parse_color_fail">不是颜色</string>
+    <string name="pref_monet_style">莫奈风格</string>
+    <string name="monet_tonalspot">色调点</string>
+    <string name="monet_fruitsalad">水果沙拉</string>
+    <string name="theme_orange">橙色</string>
+    <string name="monet_neutral">中性</string>
+    <string name="monet_vibrant">鲜艳</string>
+    <string name="monet_expressive">表现力</string>
+    <string name="monet_rainbow">彩虹</string>
+    <string name="monet_monochrome">单色</string>
+    <string name="monet_fidelity">逼真</string>
+    <string name="monet_content">内容</string>
+    <string name="theme_cyan">青色</string>
+
+    <string name="perf_appearance_summary">深色主题，配色方案，数板主题，日期格式…</string>
+    <string name="action_share_crash_log">分享崩溃日志</string>
+    <string name="action_restart_app">重启应用</string>
+    <string name="crash_screen_title">哎呀，出了点问题</string>
+    <string name="about_github_source_code">GitHub 上的源码</string>
+
+    <string name="donation_title">捐赠</string>
+
+    <string name="libraries_licenses">许可证</string>
+    <string name="app_version">版本 %1$s (%2$s)</string>
 
 </resources>

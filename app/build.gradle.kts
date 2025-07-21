@@ -61,7 +61,8 @@ dependencies {
     // m3 i like
     implementation(libs.androidx.material3)
     // 无语，和上面的冲突，还要compileOnly不能implementation，解决了一下午，早上顿悟才解决，真是无语了
-    compileOnly(libs.material3.jvmstubs)
+    //删了彻底解决问题
+//    compileOnly(libs.material3.jvmstubs)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
@@ -85,8 +86,12 @@ dependencies {
     implementation(libs.composewaveloading)
     //老牌http轻量强大完整库
     implementation(libs.okhttp)
-    //Compose pdf库
-    implementation(libs.bouquet)
+
+    // 目前我见过最好的pdf预览库了
+    implementation(libs.jetpdfvue)
+    //Compose pdf库 只能安卓13以上使用
+//    implementation(libs.bouquet)
+//    implementation(libs.android.pdf.viewer)
 
     // Hilt 依赖
     // 在compose中感觉能用上，第一次用
@@ -98,6 +103,14 @@ dependencies {
     //wowwowow 太好用了吧，看文档晕晕的，用下来也太爽了，只能说无敌
     implementation(libs.core)
     ksp(libs.compose.destinations.ksp)
+
+
+    // kolor!!
+    implementation(libs.materialKolor)
+
+    // 偷的别人的包(
+    implementation(project(":Color-Picker"))
+
 
 
 

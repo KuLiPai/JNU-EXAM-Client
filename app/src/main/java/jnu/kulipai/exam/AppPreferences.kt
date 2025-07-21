@@ -24,17 +24,17 @@ class AppPreferences @Inject constructor(
     var isNight: Boolean
         get() = prefs.getBoolean(NIGHT, false)
         set(value) = prefs.edit { putBoolean(NIGHT, value) }
-
     var repo: String
         get() = prefs.getString(REPO, "gitee").toString()
         set(value) = prefs.edit { putString(REPO, value) }
-
-
-
     var day: Int
         get() = prefs.getInt(DAY, 0)
         set(value) = prefs.edit { putInt(DAY, value) }
 
+    // 间隔更新天数
+    var update: Int
+        get() = prefs.getInt(UPDATE, 0)
+        set(value) = prefs.edit { putInt(UPDATE, value) }
 
 
     companion object {
@@ -43,5 +43,6 @@ class AppPreferences @Inject constructor(
         private const val NIGHT = "night"
         private const val REPO = "repo"
         private const val DAY = "day"
+        private const val UPDATE = "update"
     }
 }

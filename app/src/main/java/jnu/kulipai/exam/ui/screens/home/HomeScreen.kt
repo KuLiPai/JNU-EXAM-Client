@@ -1,5 +1,6 @@
-package jnu.kulipai.exam.ui.screens
+package jnu.kulipai.exam.ui.screens.home
 
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
@@ -50,19 +51,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
-import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootGraph
 import com.ramcosta.composedestinations.generated.destinations.SettingScreenDestination
@@ -70,16 +70,14 @@ import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.setruth.themechange.components.MaskAnimActive
 import com.setruth.themechange.components.MaskBox
 import jnu.kulipai.exam.R
-import jnu.kulipai.exam.ThemeToggleButton
 import jnu.kulipai.exam.components.FileCard
 import jnu.kulipai.exam.components.FolderCard
+import jnu.kulipai.exam.components.ThemeToggleButton
 import jnu.kulipai.exam.data.model.DirNode
 import jnu.kulipai.exam.data.model.FileItem
 import jnu.kulipai.exam.data.model.LoadingState
-import jnu.kulipai.exam.data.model.ThemeState
 import jnu.kulipai.exam.ui.anim.AnimatedNavigation
 import jnu.kulipai.exam.util.FileManager
-import jnu.kulipai.exam.viewmodel.HomeViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -95,11 +93,12 @@ fun MainApp(
 ) {
 
 
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/plain")) { uri ->
-        uri?.let {
-            viewModel.exportFileToUri(viewModel.exportPath, it)
+    val launcher =
+        rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/plain")) { uri ->
+            uri?.let {
+                viewModel.exportFileToUri(viewModel.exportPath, it)
+            }
         }
-    }
 
     // 设置 launcher 给 ViewModel
     LaunchedEffect(Unit) {
@@ -114,24 +113,21 @@ fun MainApp(
     // 这个好乱，我问ai怎么优化代码，他让我再写一个类就写一个配置一行代码，我说能不能写进viewModel
     // ai说x，要写进一个新文件，
     // 我说f**k(
-    LaunchedEffect(Unit) {
-        ThemeState.isDark = appPrefs.isNight
-    }
+    // 已经优化掉了，当我没说
 
-    val isDarkTheme = ThemeState.isDark
+
+    val darkTheme by viewModel.darkTheme.collectAsStateWithLifecycle(0)
     var isAnimating by remember { mutableStateOf(false) }
     var pendingThemeChange by remember { mutableStateOf<Boolean?>(null) }
-    val systemUiController = rememberSystemUiController()
 
-    LaunchedEffect(isDarkTheme) {
-        systemUiController.setSystemBarsColor(color = Color.Transparent, darkIcons = !isDarkTheme)
-    }
+
 
     MaskBox(
         animTime = 1500L,
         maskComplete = {
             pendingThemeChange?.let { newTheme ->
-                ThemeState.isDark = newTheme
+
+                viewModel.updateDarkTheme(if (newTheme) 2 else 1)
                 appPrefs.isNight = newTheme
                 pendingThemeChange = null
             }
@@ -141,13 +137,21 @@ fun MainApp(
         }
     ) { maskAnimActiveEvent ->
         MainScaffold(
-            isDarkTheme = isDarkTheme,
+            isDarkTheme = when (darkTheme) {
+                1 -> false
+                2 -> true
+                else -> false
+            },
             isAnimating = isAnimating,
             homeViewModel = viewModel,
             onThemeToggle = { animModel, x, y ->
                 if (!isAnimating) {
                     isAnimating = true
-                    pendingThemeChange = !ThemeState.isDark
+                    pendingThemeChange = !when (darkTheme) {
+                        1 -> false
+                        2 -> true
+                        else -> false
+                    }
                     maskAnimActiveEvent(animModel, x, y)
                 }
             },
@@ -174,6 +178,21 @@ fun MainScaffold(
     homeViewModel.isSearch.collectAsState()
     val focusManager = LocalFocusManager.current
     val focusRequester = remember { FocusRequester() }
+
+    var shouldBlockBack by remember { mutableStateOf(false) }
+
+    LaunchedEffect(pwd.value) {
+        shouldBlockBack = pwd.value != "/"
+
+
+    }
+
+    // 拦截系统返回
+    BackHandler(enabled = shouldBlockBack) {
+        // 你可以弹窗确认、执行某些操作等
+        homeViewModel.handleBackPress()
+    }
+
 
     Scaffold(
         modifier = Modifier
@@ -253,7 +272,8 @@ fun MainScaffold(
                             //好吧忘了，不对懒了
                             ThemeToggleButton(
                                 isAnimating = isAnimating,
-                                onThemeToggle = onThemeToggle
+                                onThemeToggle = onThemeToggle,
+                                homeViewModel
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             IconButton(onClick = {
@@ -333,7 +353,8 @@ fun MainScaffold(
     ) { innerPadding ->
 
         Column {
-            MainContent(modifier = Modifier.padding(innerPadding), homeViewModel)
+            MainContent(modifier = Modifier.padding(innerPadding), homeViewModel, navController)
+
 
         }
     }
@@ -344,7 +365,11 @@ fun MainScaffold(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainContent(modifier: Modifier = Modifier, homeViewModel: HomeViewModel) {
+fun MainContent(
+    modifier: Modifier = Modifier,
+    homeViewModel: HomeViewModel,
+    navController: DestinationsNavigator
+) {
 
     val loadingState = homeViewModel.loadingState.collectAsState() // 从 ViewModel 收集 loadingState
     val pwd = homeViewModel.currentPath.collectAsState() // 从 ViewModel 收集 loadingState
@@ -418,7 +443,7 @@ fun MainContent(modifier: Modifier = Modifier, homeViewModel: HomeViewModel) {
                                 homeViewModel.navigateTo(name)
                             })
                         } else if (item is FileItem) {
-                            FileCard(item, homeViewModel)
+                            FileCard(item, homeViewModel,navController)
                         }
 
                     }
