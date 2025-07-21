@@ -4,13 +4,14 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
+    alias(libs.plugins.aboutLibraries)
+
 }
 
 android {
     namespace = "jnu.kulipai.exam"
     // 安卓16是Baklava，没吃过，看着像切糕？
     compileSdk = 36
-
 
     defaultConfig {
         applicationId = "jnu.kulipai.exam"
@@ -21,7 +22,13 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        vectorDrawables {
+            useSupportLibrary = true
+        }
     }
+
+
 
     buildTypes {
         release {
@@ -45,9 +52,20 @@ android {
     }
     buildFeatures {
         compose = true
+
+        // 666,gpa 8开始默认关闭，导致我弄了半天
+        buildConfig = true
     }
 }
 
+
+
+
+// 自动生成开源许可列表
+aboutLibraries {
+    // Remove the "generated" timestamp to allow for reproducible builds
+    excludeFields = arrayOf("generated")
+}
 
 dependencies {
     implementation(libs.androidx.core.ktx)
@@ -111,8 +129,9 @@ dependencies {
     // 偷的别人的包(
     implementation(project(":Color-Picker"))
 
-
-
+    implementation(libs.aboutlibraries.compose.core)
+    implementation(libs.aboutlibraries.core)
+    implementation(libs.aboutlibraries.compose.m3)
 
 
 }

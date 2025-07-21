@@ -140,7 +140,7 @@ fun PdfScaffold(
 
                     TopAppBar(
                         title = {
-                            Text(Cache.currentName.substring(8)+"...")
+                            Text(Cache.currentName.substring(0,7)+"...")
                         },
                         navigationIcon = {
                         },

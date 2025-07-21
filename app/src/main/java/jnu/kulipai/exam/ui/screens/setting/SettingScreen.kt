@@ -36,9 +36,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.kaajjo.libresudoku.ui.more.about.AboutScreen
 import com.kaajjo.libresudoku.ui.more.settings.components.AppThemePreviewItem
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootGraph
+import com.ramcosta.composedestinations.generated.destinations.AboutScreenDestination
 import com.ramcosta.composedestinations.generated.destinations.SettingsAppearanceScreenDestination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import jnu.kulipai.exam.R
@@ -108,7 +110,7 @@ fun SettingScreen(
                     title = "关于",
 //                  subtitle = "",
                     onClick = {
-//                        navigator.navigate(SettingsLanguageScreenDestination())
+                        navigator.navigate(AboutScreenDestination)
                     },
                     painter = rememberVectorPainter(Icons.Outlined.Info)
                 )
