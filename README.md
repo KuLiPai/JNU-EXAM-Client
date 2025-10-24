@@ -10,16 +10,18 @@
 * **直观界面：** 采用 Jetpack Compose 构建的简洁现代的用户界面，带来流畅体验。
 * **加载动画：** 精心设计的 Lottie 动画，在加载过程中提升用户体验。
 * **遮罩动画：** 流畅的遮罩动画，带来精致的视觉效果。
-
+* 
 -----
 
 ## 📸 屏幕截图
 
-*(请替换为您的应用实际截图)*
+<div>
+  <img src="https://github.com/user-attachments/assets/b45e2b3c-57bb-40a3-a923-653bdfe67a5e" width="25%" />
+  <img src="https://github.com/user-attachments/assets/3213c1a6-abec-418f-9430-b81ef4d805a8" width="25%" />
+  <img src="https://github.com/user-attachments/assets/46c60778-2399-4fa1-89a0-54d5be086a81" width="25%" />
+</div>
 
-| 主屏幕 | 详情页 |
-| :---------: | :---------: |
-| [图片] | [图片] |
+
 
 -----
 
