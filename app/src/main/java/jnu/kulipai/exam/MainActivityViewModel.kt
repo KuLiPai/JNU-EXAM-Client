@@ -9,8 +9,14 @@ import javax.inject.Inject
 class MainActivityViewModel
 @Inject constructor(
     themeSettingsManager: ThemeSettingsManager,
+    appPreferences: AppPreferences,
+
 //    appSettingsManager: AppSettingsManager
 ) : ViewModel() {
+
+    val appPre = appPreferences
+
+
     val dc = themeSettingsManager.dynamicColors
     val darkTheme = themeSettingsManager.darkTheme
     val amoledBlack = themeSettingsManager.amoledBlack

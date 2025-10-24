@@ -132,5 +132,7 @@
 
     <string name="libraries_licenses">许可证</string>
     <string name="app_version">版本 %1$s (%2$s)</string>
+    <string name="uninstall_title">不要卸载我喵</string>
+    <string name="uninstall_tip">我知道我是compose写的解压出来比较占内存，但是但是我不会像qq一样膨胀，我可能连0.1%储存都没用到，请不要卸载我啊，如果觉得好用的话，请给我github点个star谢谢喵，flag{XiaoMi_Win!}</string>
 
 </resources>

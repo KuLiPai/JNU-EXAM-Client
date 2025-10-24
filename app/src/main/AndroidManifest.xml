@@ -26,6 +26,14 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- 我们专门为小米手机桌面卸载添加了提示，提升用户体验 -->
+        <meta-data
+            android:name="app_description_title"
+            android:resource="@string/uninstall_title" />
+        <meta-data
+            android:name="app_description_content"
+            android:resource="@string/uninstall_tip" />
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

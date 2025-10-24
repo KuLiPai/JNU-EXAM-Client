@@ -1,3 +1,5 @@
+package jnu.kulipai.exam.ui.egg
+
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -39,6 +41,10 @@ import jnu.kulipai.exam.R
 import jnu.kulipai.exam.ui.anim.AnimatedNavigation
 import kotlin.math.sqrt
 import kotlin.random.Random
+
+
+//强大的gemini
+
 
 // 1. 定义一个数据类来表示每个静态的Emoji粒子
 private data class StaticEmoji(
@@ -247,7 +253,7 @@ private fun generatePackedEmojis(
 fun PreviewEmojiEasterEgg() {
     MaterialTheme {
         Surface(color = Color.White) {
-            EmojiEasterEggScreen()
+            Text("flag{I_L1ke_Tiramisu😍}")
         }
     }
 }

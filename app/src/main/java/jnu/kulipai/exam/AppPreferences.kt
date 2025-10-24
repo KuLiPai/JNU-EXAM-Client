@@ -27,14 +27,21 @@ class AppPreferences @Inject constructor(
     var repo: String
         get() = prefs.getString(REPO, "gitee").toString()
         set(value) = prefs.edit { putString(REPO, value) }
-    var day: Int
-        get() = prefs.getInt(DAY, 0)
-        set(value) = prefs.edit { putInt(DAY, value) }
+    var day: Long
+        get() = prefs.getLong(DAY, -1)
+        set(value) = prefs.edit { putLong(DAY, value) }
 
     // 间隔更新天数
     var update: Int
         get() = prefs.getInt(UPDATE, 0)
         set(value) = prefs.edit { putInt(UPDATE, value) }
+
+    // 严谨的100秒
+    var cooldown: Long
+        get() = prefs.getLong(COOLDOWN, 0L)
+        set(value) = prefs.edit { putLong(COOLDOWN, value) }
+
+
 
 
     companion object {
@@ -44,5 +51,6 @@ class AppPreferences @Inject constructor(
         private const val REPO = "repo"
         private const val DAY = "day"
         private const val UPDATE = "update"
+        private const val COOLDOWN = "cooldown"
     }
 }

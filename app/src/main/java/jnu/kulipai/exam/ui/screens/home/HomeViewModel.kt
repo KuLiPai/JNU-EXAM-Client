@@ -1,6 +1,7 @@
 package jnu.kulipai.exam.ui.screens.home
 
 import android.app.Application
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.webkit.MimeTypeMap
@@ -43,7 +44,7 @@ class HomeViewModel @Inject constructor(
     ) : ViewModel() {
 
 
-        var currentFile = MutableStateFlow(File("/"))
+    var currentFile = MutableStateFlow(File("/"))
 
 
     val darkTheme = themeSettingsManager.darkTheme
@@ -142,12 +143,14 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             _loadingState.value = LoadingState.Loading
             try {
+               File(application.filesDir ,"cache.json").delete()
+
                 // 这里直接调用 repository 的逻辑
                 val newRoot =
                     fileRepository.getDirectoryTree(application) // 假设 repository 有一个 forceUpdate 参数
                 _root.value = newRoot
                 _loadingState.value = LoadingState.Loaded
-                appPreferences.day = LocalDate.now().dayOfMonth
+                appPreferences.day =  System.currentTimeMillis()
                 Toast.makeText(application, "数据已更新！", Toast.LENGTH_SHORT).show()
             } catch (e: Exception) {
                 Toast.makeText(application, "更新失败: ${e.message}", Toast.LENGTH_SHORT).show()

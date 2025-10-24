@@ -36,6 +36,7 @@ fun PreferenceRow(
     onLongClick: (() -> Unit)? = null,
     subtitle: String? = null,
     enabled: Boolean = true,
+    diy: @Composable (() -> Unit)? = null,
     action: @Composable (() -> Unit)? = null,
     shape: Shape = RoundedCornerShape(0.dp)
 ) {
@@ -81,6 +82,9 @@ fun PreferenceRow(
                 style = titleStyle,
                 color = titleStyle.color.copy(alpha = if (enabled) 1f else 0.6f)
             )
+            if (diy != null) {
+                diy()
+            }
             if (subtitle != null) {
                 Text(
                     modifier = Modifier.padding(top = 4.dp),
@@ -88,7 +92,9 @@ fun PreferenceRow(
                     style = subtitleTextStyle,
                     color = subtitleTextStyle.color.copy(alpha = 0.75f),
                 )
+
             }
+
         }
         if (action != null) {
             Box(

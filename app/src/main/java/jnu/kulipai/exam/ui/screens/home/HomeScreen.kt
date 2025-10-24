@@ -44,6 +44,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -69,7 +70,9 @@ import com.ramcosta.composedestinations.generated.destinations.SettingScreenDest
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.setruth.themechange.components.MaskAnimActive
 import com.setruth.themechange.components.MaskBox
+import com.setruth.themechange.model.MaskAnimModel
 import jnu.kulipai.exam.R
+import jnu.kulipai.exam.components.BounceUpButton
 import jnu.kulipai.exam.components.FileCard
 import jnu.kulipai.exam.components.FolderCard
 import jnu.kulipai.exam.components.ThemeToggleButton
@@ -152,7 +155,14 @@ fun MainApp(
                         2 -> true
                         else -> false
                     }
-                    maskAnimActiveEvent(animModel, x, y)
+                    maskAnimActiveEvent(
+                        if (when (darkTheme) {
+                                1 -> false
+                                2 -> true
+                                else -> false
+                            }
+                        ) MaskAnimModel.EXPEND else MaskAnimModel.SHRINK, x, y
+                    )
                 }
             },
             navController = navigator,
@@ -371,6 +381,7 @@ fun MainContent(
     navController: DestinationsNavigator
 ) {
 
+    val appPrefs = homeViewModel.appPre
     val loadingState = homeViewModel.loadingState.collectAsState() // 从 ViewModel 收集 loadingState
     val pwd = homeViewModel.currentPath.collectAsState() // 从 ViewModel 收集 loadingState
     val root = homeViewModel.root.collectAsState() // 从 ViewModel 收集 loadingState
@@ -443,16 +454,28 @@ fun MainContent(
                                 homeViewModel.navigateTo(name)
                             })
                         } else if (item is FileItem) {
-                            FileCard(item, homeViewModel,navController)
+                            FileCard(item, homeViewModel, navController)
                         }
 
                     }
                 }
             }
-            //更新数据按钮
-//                if (appPrefs.day != LocalDate.now().dayOfMonth) {
-//                    BounceUpButton({})
-//                }
+
+
+            if (appPrefs.update != 0) {
+                // 第一次打开，记录时间
+                val firstOpenTime by remember { mutableLongStateOf(appPrefs.day) }
+
+                if (firstOpenTime == -1L) {
+                    appPrefs.day = System.currentTimeMillis()
+                } else {
+                    if ((System.currentTimeMillis() - firstOpenTime) / (1000 * 60 * 60 * 24) >= appPrefs.update) {
+                        BounceUpButton({
+                            homeViewModel.updateRepositoryData()
+                        })
+                    }
+                }
+            }
         }
     }
 }

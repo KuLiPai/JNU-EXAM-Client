@@ -40,9 +40,6 @@ import javax.inject.Inject
 @AndroidEntryPoint // Hilt 入口点
 class MainActivity : ComponentActivity() {
 
-
-    // 通过 Hilt 注入 HomeViewModel
-
     @Inject
     lateinit var appPrefs: AppPreferences
 
