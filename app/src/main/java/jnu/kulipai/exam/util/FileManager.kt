@@ -60,7 +60,8 @@ object FileManager {
                         path = fileObj.getString("path"),
                         size = fileObj.getLong("size"),
                         github_raw_url = fileObj.getString("github_raw_url"),
-                        gitee_raw_url = fileObj.getString("gitee_raw_url")
+                        gitee_raw_url = fileObj.getString("gitee_raw_url"),
+                        cf_url = fileObj.getString("cf_url")
                     )
                 )
             }

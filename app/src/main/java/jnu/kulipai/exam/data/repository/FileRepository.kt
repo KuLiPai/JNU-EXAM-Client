@@ -18,12 +18,16 @@ class FileRepository @Inject constructor(
             val json = fileManager.read(context, "cache.json")
             return fileManager.buildDirectoryTree(json.toString())
         } else {
+
             // 从网络获取
-            val url = if (appPreferences.repo == "gitee") {
-                "https://raw.githubusercontent.com/gubaiovo/JNU-EXAM/main/directory_structure.json"
-            } else {
-                "https://gitee.com/gubaiovo/jnu-exam/raw/main/directory_structure.json"
+            val url = when (appPreferences.repo ) {
+                "gitee"-> "https://raw.githubusercontent.com/gubaiovo/JNU-EXAM/main/directory_structure.json"
+                "github" -> "https://gitee.com/gubaiovo/jnu-exam/raw/main/directory_structure.json"
+                "cloudflare" -> "https://jnuexam.xyz/directory_structure.json"
+                else -> "https://raw.githubusercontent.com/gubaiovo/JNU-EXAM/main/directory_structure.json"
             }
+
+
 
             val json = api.performGetRequest(url)
             if (json != "err") {

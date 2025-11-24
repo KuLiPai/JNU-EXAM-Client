@@ -160,6 +160,8 @@ fun FileCard(
                             CopyableTextWithShape("Github", item.github_raw_url)
                             Spacer(modifier = Modifier.width(8.dp))
                             CopyableTextWithShape("Gitee", item.gitee_raw_url)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            CopyableTextWithShape("Cloudflare", item.cf_url)
                         }
                         Row(
                             modifier = Modifier

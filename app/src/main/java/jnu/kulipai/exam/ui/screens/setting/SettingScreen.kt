@@ -77,9 +77,9 @@ fun SettingScreen(
     // 一个100秒后的时间
     var cooldown by rememberSaveable { mutableStateOf(viewModel.appPre.cooldown) }
 
-    var progress by remember { mutableStateOf((System.currentTimeMillis()-cooldown)/100000f) }
+    var progress by remember { mutableStateOf((System.currentTimeMillis() - cooldown) / 100000f) }
 
-    if(progress > 1f) {
+    if (progress > 1f) {
         progress = 1f
     }
 
@@ -128,8 +128,13 @@ fun SettingScreen(
                     title = "更换仓库",
                     subtitle = "当前$currentRepo",
                     onClick = { repoModeDialog = true },
-                    painter = if (viewModel.appPre.repo == "github") painterResource(R.drawable.github_142_svgrepo_com) else painterResource(
-                        R.drawable.gitee_svgrepo_com
+                    painter = painterResource(
+                        when (viewModel.appPre.repo) {
+                            "github" -> R.drawable.github_142_svgrepo_com
+                            "gitee" -> R.drawable.gitee_svgrepo_com
+                            "cloudflare" -> R.drawable.cloudflare
+                            else -> R.drawable.gitee_svgrepo_com
+                        }
                     )
                 )
             }
@@ -137,18 +142,18 @@ fun SettingScreen(
             item {
                 PreferenceRow(
                     title = "立即更新",
-                    subtitle = if(100-(progress*100).toInt()==0) "冷却完成" else "冷却剩余${100-(progress*100).toInt()}秒",
+                    subtitle = if (100 - (progress * 100).toInt() == 0) "冷却完成" else "冷却剩余${100 - (progress * 100).toInt()}秒",
                     diy = {
                         LinearProgressIndicator(
                             progress = { animatedProgress },
                         )
                     },
                     onClick = {
-                        if(progress==1f) {
+                        if (progress == 1f) {
                             progress = 0f
                             viewModel.appPre.cooldown = System.currentTimeMillis()
                             viewModel.updateRepositoryData()
-                        }else{
+                        } else {
                             Toast.makeText(context, "冷却中", Toast.LENGTH_SHORT).show()
                         }
 
@@ -185,13 +190,19 @@ fun SettingScreen(
         SelectionDialog(
             title = "选择仓库",
             selections = listOf(
-                "Github", "Gitee"
+                "Github", "Gitee","Cloudflare"
             ),
-            selected = if (viewModel.appPre.repo == "github") 0 else 1,
+            selected = when (viewModel.appPre.repo) {
+                "github" -> 0
+                "gitee" -> 1
+                "cloudflare" -> 2
+                else -> 1
+            },
             onSelect = { index ->
                 currentRepo = when (index) {
                     0 -> "github"
                     1 -> "gitee"
+                    2 -> "cloudflare"
                     else -> "gitee"
                 }
                 viewModel.appPre.repo = currentRepo

@@ -1,7 +1,6 @@
 package jnu.kulipai.exam.ui.screens.home
 
 import android.app.Application
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.webkit.MimeTypeMap
@@ -28,7 +27,6 @@ import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileInputStream
 import java.io.OutputStream
-import java.time.LocalDate
 import javax.inject.Inject
 
 //哇好像很方便，在一个地方统一管理需要context的函数
@@ -143,14 +141,14 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             _loadingState.value = LoadingState.Loading
             try {
-               File(application.filesDir ,"cache.json").delete()
+                File(application.filesDir, "cache.json").delete()
 
                 // 这里直接调用 repository 的逻辑
                 val newRoot =
                     fileRepository.getDirectoryTree(application) // 假设 repository 有一个 forceUpdate 参数
                 _root.value = newRoot
                 _loadingState.value = LoadingState.Loaded
-                appPreferences.day =  System.currentTimeMillis()
+                appPreferences.day = System.currentTimeMillis()
                 Toast.makeText(application, "数据已更新！", Toast.LENGTH_SHORT).show()
             } catch (e: Exception) {
                 Toast.makeText(application, "更新失败: ${e.message}", Toast.LENGTH_SHORT).show()
@@ -164,10 +162,11 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             downloadCallback(DownLoadState.DownLoading)
             try {
-                val url = if (appPreferences.repo == "gitee") {
-                    fileItem.gitee_raw_url
-                } else {
-                    fileItem.github_raw_url
+                val url = when (appPreferences.repo) {
+                    "gitee" -> fileItem.gitee_raw_url
+                    "github" -> fileItem.github_raw_url
+                    "cloudflare" -> fileItem.cf_url
+                    else -> fileItem.gitee_raw_url
                 }
                 Api.downloadFileToInternal(
                     application, // 使用 application context
