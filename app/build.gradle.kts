@@ -73,10 +73,20 @@ android {
 
 
 
-// 自动生成开源许可列表
+//// 自动生成开源许可列表
+//aboutLibraries {
+//    // Remove the "generated" timestamp to allow for reproducible builds
+//    excludeFields = arrayOf("generated")
+//}
+
 aboutLibraries {
-    // Remove the "generated" timestamp to allow for reproducible builds
-    excludeFields = arrayOf("generated")
+    export {
+        // Define the output path for manual generation
+        // Adjust the path based on your project structure (e.g., composeResources, Android res/raw)
+        outputFile = file("src/main/res/raw/aboutlibraries.json")
+        // Optionally specify the variant for export
+        // variant = "release"
+    }
 }
 
 dependencies {
@@ -119,7 +129,9 @@ dependencies {
 //    implementation(libs.okhttp)
 
     // 目前我见过最好的pdf预览库了
-    implementation(libs.jetpdfvue)
+//    implementation(libs.jetpdfvue)
+    // kmp的pdf预览，上面那个会复制文件，乱死了
+    implementation(libs.compose.pdf)
     //Compose pdf库 只能安卓13以上使用
 //    implementation(libs.bouquet)
 //    implementation(libs.android.pdf.viewer)

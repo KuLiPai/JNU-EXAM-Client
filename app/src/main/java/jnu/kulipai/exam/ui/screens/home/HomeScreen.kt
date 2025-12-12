@@ -156,7 +156,6 @@ class MainScreen : Screen {
                 isAnimating = false, // 这个参数现在不重要了
                 homeViewModel = viewModel,
 
-                // 🔥🔥🔥 重点修改：点击事件 🔥🔥🔥
                 onThemeToggle = { _, x, y ->
 
                     val isExpand = (darkTheme == 2)

@@ -24,13 +24,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.ElevatedButton
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.Indicator
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -56,7 +56,6 @@ import jnu.kulipai.exam.util.FileManager
 import java.io.File
 
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun FileCard(
     item: FileItem,
@@ -244,12 +243,20 @@ fun FileCard(
                                     }
 
                                     DownLoadState.DownLoading -> {
-                                        LoadingIndicator(
+                                        Indicator(
                                             color = MaterialTheme.colorScheme.onPrimary,
+                                            isRefreshing = true,
                                             modifier = Modifier
                                                 .width(24.dp)
                                                 .height(24.dp),
+                                            state = rememberPullToRefreshState(),
                                         )
+//                                        LoadingIndicator(
+//                                            color = MaterialTheme.colorScheme.onPrimary,
+//                                            modifier = Modifier
+//                                                .width(24.dp)
+//                                                .height(24.dp),
+//                                        )
                                         Spacer(modifier = Modifier.width(4.dp))
                                         Text("下载中")
                                     }

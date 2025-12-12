@@ -19,14 +19,14 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Done
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.Indicator
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -41,7 +41,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
@@ -61,7 +60,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.compose.koinInject
-import org.koin.java.KoinJavaComponent.inject
 import java.net.InetSocketAddress
 import java.net.Socket
 
@@ -177,7 +175,7 @@ fun WelcomeApp(onFinish: () -> Unit, appPreferences: AppPreferences) {
 private const val ANIMATION_DURATION = 400
 private val smoothEasing = FastOutSlowInEasing
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+
 class OneScreen : Screen, SlideAnimationScreen {
 
     @Composable
@@ -221,9 +219,11 @@ class OneScreen : Screen, SlideAnimationScreen {
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         //全新加载变形等待
-                        LoadingIndicator(
+                        Indicator(
                             color = one_contentColor,
+                            isRefreshing = true,
                             modifier = Modifier.size(24.dp),
+                            state = rememberPullToRefreshState(),
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text("Next")
@@ -234,8 +234,6 @@ class OneScreen : Screen, SlideAnimationScreen {
     }
 }
 
-
-@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3ExpressiveApi::class)
 class TwoScreen : Screen, SlideAnimationScreen {
 
     @Composable
@@ -290,7 +288,13 @@ class TwoScreen : Screen, SlideAnimationScreen {
                     modifier = Modifier.padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    LoadingIndicator(color = two_contentColor, modifier = Modifier.size(24.dp))
+                    Indicator(
+                        color = two_contentColor,
+                        isRefreshing = true,
+                        modifier = Modifier.size(24.dp),
+                        state = rememberPullToRefreshState(),
+                    )
+
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Next")
                 }
@@ -300,8 +304,6 @@ class TwoScreen : Screen, SlideAnimationScreen {
 }
 
 // 为 ThreeScreen 添加 onFinish 回调
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-
 class ThreeScreen : Screen, SlideAnimationScreen {
     @Composable
     override fun Content() {
@@ -463,12 +465,14 @@ class ThreeScreen : Screen, SlideAnimationScreen {
                     modifier = Modifier.padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    LoadingIndicator(
+                    Indicator(
                         color = three_contentColor,
-                        modifier = Modifier
-                            .width(24.dp)
-                            .height(24.dp),
+                        isRefreshing = true,
+                        modifier =  Modifier.width(24.dp)
+                        .height(24.dp),
+                        state = rememberPullToRefreshState(),
                     )
+
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Welcome")
                 }

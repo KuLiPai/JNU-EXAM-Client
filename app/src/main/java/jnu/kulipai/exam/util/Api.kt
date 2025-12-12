@@ -1,22 +1,20 @@
 package jnu.kulipai.exam.util
 
 import android.content.Context
+import android.util.Log
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsChannel
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.isSuccess
-import io.ktor.utils.io.jvm.javaio.toInputStream
+import io.ktor.utils.io.jvm.javaio.copyTo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-
 import java.io.File
 import java.io.FileOutputStream
-import java.io.IOException
-import java.io.InputStream
 
 object Api {
     lateinit var client: HttpClient
@@ -111,7 +109,6 @@ object Api {
         onSuccess: () -> Unit,
         onFailure: (Exception) -> Unit
     ) {
-        // 等价于 OkHttp enqueue —> 使用协程异步执行
         CoroutineScope(Dispatchers.IO).launch {
 
             try {
@@ -122,29 +119,20 @@ object Api {
                     return@launch
                 }
 
-                val inputStream: InputStream = response.bodyAsChannel().toInputStream()
-
-                // 拼接内部存储路径
+                // 2. 确保路径处理正确
+                // File(parent, child) 会自动处理路径分隔符
                 val destinationFile = File(context.filesDir, relativePath)
+                // 3. 写入文件逻辑 (推荐使用 Ktor 的 readBytes 或 ByteReadChannel 直接写入，效率更高)
+                destinationFile.parentFile?.mkdirs()
 
-                // 创建父级目录
-                destinationFile.parentFile?.let {
-                    if (!it.exists() && !it.mkdirs()) {
-                        onFailure(Exception("Failed to create directory: ${it.absolutePath}"))
-                        return@launch
-                    }
+                // 使用 Ktor 的 copyTo 直接对接 File流，减少内存占用
+                val channel = response.bodyAsChannel()
+                val fileStream = FileOutputStream(destinationFile)
+
+                fileStream.use { output ->
+                    channel.copyTo(output)
                 }
 
-                // 写入文件
-                withContext(Dispatchers.IO) {
-                    FileOutputStream(destinationFile).use { output ->
-                        inputStream.use { input ->
-                            input.copyTo(output)
-                        }
-                    }
-                }
-
-                // 回调主线程通知成功
                 withContext(Dispatchers.Main) { onSuccess() }
 
             } catch (e: Exception) {
@@ -152,25 +140,6 @@ object Api {
             }
         }
     }
-    //例子
-    /*
-    downloadFileToInternal(
-    context = this,
-    url = "http://example.com/a.zip",
-    filename = "a.zip",
-    onSuccess = {
-        runOnUiThread {
-            Toast.makeText(this, "下载成功！", Toast.LENGTH_SHORT).show()
-        }
-    },
-    onFailure = {
-        runOnUiThread {
-            Toast.makeText(this, "下载失败：${it.message}", Toast.LENGTH_LONG).show()
-        }
-    }
-)
-
-     */
 
 
 }

@@ -18,6 +18,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import com.mikepenz.aboutlibraries.ui.compose.android.produceLibraries
 import com.mikepenz.aboutlibraries.ui.compose.android.rememberLibraries
 import com.mikepenz.aboutlibraries.ui.compose.m3.LibrariesContainer
 import jnu.kulipai.exam.R
@@ -49,7 +50,7 @@ class AboutLibrariesScreen : Screen {
             },
         ) { innerPadding ->
 
-            val libraries = rememberLibraries(R.raw.aboutlibraries)
+            val libraries = produceLibraries(R.raw.aboutlibraries)
             LibrariesContainer(
                 libraries = libraries.value,
                 modifier = Modifier
