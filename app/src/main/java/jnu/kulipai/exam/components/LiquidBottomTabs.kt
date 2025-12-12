@@ -25,7 +25,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
@@ -41,8 +40,6 @@ import com.kyant.backdrop.Backdrop
 import com.kyant.backdrop.backdrops.layerBackdrop
 import com.kyant.backdrop.backdrops.rememberCombinedBackdrop
 import com.kyant.backdrop.backdrops.rememberLayerBackdrop
-import jnu.kulipai.exam.util.DampedDragAnimation
-import jnu.kulipai.exam.util.InteractiveHighlight
 import com.kyant.backdrop.drawBackdrop
 import com.kyant.backdrop.effects.blur
 import com.kyant.backdrop.effects.lens
@@ -51,6 +48,8 @@ import com.kyant.backdrop.highlight.Highlight
 import com.kyant.backdrop.shadow.InnerShadow
 import com.kyant.backdrop.shadow.Shadow
 import com.kyant.capsule.ContinuousCapsule
+import jnu.kulipai.exam.util.DampedDragAnimation
+import jnu.kulipai.exam.util.InteractiveHighlight
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
@@ -64,12 +63,20 @@ fun LiquidBottomTabs(
     backdrop: Backdrop,
     tabsCount: Int,
     modifier: Modifier = Modifier,
-    content: @Composable RowScope.() -> Unit
+    myaccentColor: Color? = null,
+    content: @Composable RowScope.() -> Unit,
 ) {
     val isLightTheme = !isSystemInDarkTheme()
-    val accentColor =
-        if (isLightTheme) Color(0xFF0088FF)
-        else Color(0xFF0091FF)
+    var accentColor: Color
+    if (myaccentColor == null) {
+        accentColor =
+            if (isLightTheme) Color(0xFF0088FF)
+            else Color(0xFF0091FF)
+    } else {
+        accentColor = myaccentColor
+    }
+
+
     val containerColor =
         if (isLightTheme) Color(0xFFFAFAFA).copy(0.4f)
         else Color(0xFF121212).copy(0.4f)

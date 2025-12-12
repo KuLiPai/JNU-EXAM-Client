@@ -15,18 +15,24 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicText
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
@@ -44,19 +50,29 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.paint
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
@@ -67,25 +83,30 @@ import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
+import com.kyant.backdrop.backdrops.layerBackdrop
+import com.kyant.backdrop.backdrops.rememberLayerBackdrop
 import com.setruth.themechange.components.MaskAnimActive
-import com.setruth.themechange.components.MaskBox
-import com.setruth.themechange.model.MaskAnimModel
 import jnu.kulipai.exam.R
 import jnu.kulipai.exam.components.BounceUpButton
 import jnu.kulipai.exam.components.FileCard
 import jnu.kulipai.exam.components.FolderCard
+import jnu.kulipai.exam.components.LiquidBottomTab
+import jnu.kulipai.exam.components.LiquidBottomTabs
 import jnu.kulipai.exam.components.ThemeToggleButton
 import jnu.kulipai.exam.data.model.DirNode
 import jnu.kulipai.exam.data.model.FileItem
 import jnu.kulipai.exam.data.model.LoadingState
 import jnu.kulipai.exam.ui.screens.setting.SettingScreen
+import jnu.kulipai.exam.ui.util.ScreenshotThemeTransition
 import jnu.kulipai.exam.util.FileManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
+
 
 //这里有笼罩动画，状态栏
 class MainScreen : Screen {
@@ -121,49 +142,39 @@ class MainScreen : Screen {
 
 
         val darkTheme by viewModel.darkTheme.collectAsStateWithLifecycle(0)
-        var isAnimating by remember { mutableStateOf(false) }
-        var pendingThemeChange by remember { mutableStateOf<Boolean?>(null) }
 
 
 
-        MaskBox(
-            animTime = 800L,
-            maskComplete = {
-                pendingThemeChange?.let { newTheme ->
 
-                    viewModel.updateDarkTheme(if (newTheme) 2 else 1)
-                    appPrefs.isNight = newTheme
-                    pendingThemeChange = null
-                }
-            },
-            animFinish = {
-                isAnimating = false
-            }
-        ) { maskAnimActiveEvent ->
+        ScreenshotThemeTransition(
+            isDarkTheme = (darkTheme == 2),
+            modifier = Modifier
+        ) { startAnim ->
+
             MainScaffold(
-                isDarkTheme = when (darkTheme) {
-                    1 -> false
-                    2 -> true
-                    else -> false
-                },
-                isAnimating = isAnimating,
+                isDarkTheme = (darkTheme == 2),
+                isAnimating = false, // 这个参数现在不重要了
                 homeViewModel = viewModel,
-                onThemeToggle = { animModel, x, y ->
-                    if (!isAnimating) {
-                        isAnimating = true
-                        pendingThemeChange = !when (darkTheme) {
-                            1 -> false
-                            2 -> true
-                            else -> false
+
+                // 🔥🔥🔥 重点修改：点击事件 🔥🔥🔥
+                onThemeToggle = { _, x, y ->
+
+                    val isExpand = (darkTheme == 2)
+
+                    // 调用 startAnim
+                    // 参数1: 位置
+                    // 参数2: 扩张还是收缩
+                    // 参数3: 【核心】真正切换数据的操作，放在这里面
+                    startAnim(Offset(x, y), isExpand) {
+                        // 这个代码块会在截图完成后执行
+                        val newTheme = when (darkTheme) {
+                            1 -> true
+                            2 -> false
+                            else -> true
                         }
-                        maskAnimActiveEvent(
-                            if (when (darkTheme) {
-                                    1 -> false
-                                    2 -> true
-                                    else -> false
-                                }
-                            ) MaskAnimModel.EXPEND else MaskAnimModel.SHRINK, x, y
-                        )
+                        viewModel.updateDarkTheme(if (newTheme) 2 else 1)
+                        appPrefs.isNight = newTheme
+
                     }
                 },
                 navController = navigator,
@@ -183,6 +194,7 @@ fun MainScaffold(
     onThemeToggle: MaskAnimActive,
     navController: Navigator
 ) {
+
 
     val pwd = homeViewModel.currentPath.collectAsState()
     val searchText = homeViewModel.searchText.collectAsState()
@@ -205,7 +217,10 @@ fun MainScaffold(
     }
 
 
+
     Scaffold(
+        contentWindowInsets = WindowInsets(bottom = 0),
+
         modifier = Modifier
             .fillMaxSize()
             .pointerInput(Unit) {
@@ -359,12 +374,18 @@ fun MainScaffold(
 
 
             }
-        }
+        },
 
-    ) { innerPadding ->
+        ) { innerPadding ->
 
         Column {
-            MainContent(modifier = Modifier.padding(innerPadding), homeViewModel, navController)
+
+            MainContent(
+                modifier = Modifier
+                    .padding(innerPadding),
+                homeViewModel,
+                navController
+            )
 
 
         }
@@ -381,6 +402,21 @@ fun MainContent(
     homeViewModel: HomeViewModel,
     navController: Navigator
 ) {
+    val backgroundColor = MaterialTheme.colorScheme.background
+    val isLightTheme by remember { mutableStateOf(homeViewModel.appPre.isNight) }
+
+
+    val contentColor = if (isLightTheme) Color.Black else Color.White
+    val iconColorFilter = ColorFilter.tint(contentColor)
+
+    // 1. 定义唯一的 backdrop 控制器
+    val backdrop = rememberLayerBackdrop {
+        drawRect(backgroundColor) // 绘制背景色，防止透明导致重影
+        drawContent()             // 绘制下方的内容（即 MainContent）
+    }
+    // 2. 这里的 state 放在 Scaffold 层级
+    var selectedTabIndex by rememberSaveable { mutableIntStateOf(0) }
+
 
     val appPrefs = homeViewModel.appPre
     val loadingState =
@@ -401,83 +437,131 @@ fun MainContent(
 
     Box(
         modifier = modifier
-            .fillMaxSize(),
+            .fillMaxSize()
     ) {
-        AnimatedVisibility(
-            visible = loadingState.value == LoadingState.Loading,
-            enter = fadeIn(animationSpec = tween(durationMillis = 100)),
-            exit = fadeOut(animationSpec = tween(durationMillis = 50)),
-        ) {
-
-            LottieAnimation(
-                composition = composition,
-                progress = { progress },
-                modifier = modifier.offset(y = (-128).dp)
-            )
-
-        }
-
-        AnimatedVisibility(
-            visible = loadingState.value == LoadingState.Loaded,
-            enter = fadeIn(animationSpec = tween(durationMillis = 300)),
-            exit = fadeOut(animationSpec = tween(durationMillis = 50)),
-        ) {
-
-            lateinit var newdata: List<Any>
-
-
-            if (searchText.value.isNotEmpty() && isSearch.value) {
-                newdata = FileManager.searchFiles(root.value, searchText.value)
-
-            } else if (pwd.value == "/") {
-                val targetContent = FileManager.getDirContent(root.value, pwd.value)
-                targetContent?.let {
-                    newdata = it.subDirs + it.files
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                // 1. 先画背景 (解决重影)
+                .drawBehind {
+                    drawRect(backgroundColor)
                 }
-            } else {
-                val targetContent = FileManager.getDirContent(root.value, pwd.value)
-                targetContent?.let {
-                    newdata = listOf(
-                        DirNode(
-                            name = "..",
-                            path = "",
-                        )
-                    ) + it.subDirs + it.files
-                }
+                // 2. 再进行捕捉 (解决 Tab 看不到内容)
+                // 注意：layerBackdrop 必须加在这个包裹了所有内容的 Box 上
+                .layerBackdrop(backdrop)
+        ) {
+            AnimatedVisibility(
+                visible = loadingState.value == LoadingState.Loading,
+                enter = fadeIn(animationSpec = tween(durationMillis = 100)),
+                exit = fadeOut(animationSpec = tween(durationMillis = 50)),
+            ) {
+
+                LottieAnimation(
+                    composition = composition,
+                    progress = { progress },
+                    modifier = modifier.offset(y = (-128).dp)
+                )
+
             }
 
+            AnimatedVisibility(
+                visible = loadingState.value == LoadingState.Loaded,
+                enter = fadeIn(animationSpec = tween(durationMillis = 300)),
+                exit = fadeOut(animationSpec = tween(durationMillis = 50)),
+            ) {
 
-            Box {
+                lateinit var newdata: List<Any>
 
-                LazyColumn {
-                    items(newdata) { item ->
-                        if (item is DirNode) {
-                            FolderCard(name = item.name, { name ->
-                                homeViewModel.navigateTo(name)
-                            })
-                        } else if (item is FileItem) {
-                            FileCard(item, homeViewModel, navController)
-                        }
 
+                if (searchText.value.isNotEmpty() && isSearch.value) {
+                    newdata = FileManager.searchFiles(root.value, searchText.value)
+
+                } else if (pwd.value == "/") {
+                    val targetContent = FileManager.getDirContent(root.value, pwd.value)
+                    targetContent?.let {
+                        newdata = it.subDirs + it.files
                     }
-                }
-            }
-
-
-            if (appPrefs.update != 0) {
-                // 第一次打开，记录时间
-                val firstOpenTime by remember { mutableLongStateOf(appPrefs.day) }
-
-                if (firstOpenTime == -1L) {
-                    appPrefs.day = System.currentTimeMillis()
                 } else {
-                    if ((System.currentTimeMillis() - firstOpenTime) / (1000 * 60 * 60 * 24) >= appPrefs.update) {
-                        BounceUpButton({
-                            homeViewModel.updateRepositoryData()
-                        })
+                    val targetContent = FileManager.getDirContent(root.value, pwd.value)
+                    targetContent?.let {
+                        newdata = listOf(
+                            DirNode(
+                                name = "..",
+                                path = "",
+                            )
+                        ) + it.subDirs + it.files
+                    }
+                }
+
+
+                Box {
+
+                    LazyColumn {
+                        items(newdata) { item ->
+                            if (item is DirNode) {
+                                FolderCard(name = item.name, { name ->
+                                    homeViewModel.navigateTo(name)
+                                })
+                            } else if (item is FileItem) {
+                                FileCard(item, homeViewModel, navController)
+                            }
+
+                        }
+                        item {
+                            Spacer(Modifier.height(128.dp))
+                        }
+                    }
+                }
+
+
+
+
+                if (appPrefs.update != 0) {
+                    // 第一次打开，记录时间
+                    val firstOpenTime by remember { mutableLongStateOf(appPrefs.day) }
+
+                    if (firstOpenTime == -1L) {
+                        appPrefs.day = System.currentTimeMillis()
+                    } else {
+                        if ((System.currentTimeMillis() - firstOpenTime) / (1000 * 60 * 60 * 24) >= appPrefs.update) {
+                            BounceUpButton({
+                                homeViewModel.updateRepositoryData()
+                            })
+                        }
                     }
                 }
             }
         }
+
+
+        LiquidBottomTabs(
+            myaccentColor = MaterialTheme.colorScheme.primary,
+            selectedTabIndex = { selectedTabIndex },
+            onTabSelected = { selectedTabIndex = it },
+            backdrop = backdrop,  // 传入上面定义的那个 backdrop
+            tabsCount = 3,
+            modifier = Modifier
+                .padding(horizontal = 36.dp, vertical = 16.dp) // 调整 padding
+                .navigationBarsPadding() // 适配底部手势条
+                .align(Alignment.BottomCenter) // 放在底部
+        ) {
+            repeat(3) { index ->
+                LiquidBottomTab({ selectedTabIndex = index }) {
+                    Box(
+                        Modifier
+                            .size(28.dp)
+                            .paint(
+                                painterResource(R.drawable.notifications_24px),
+                                colorFilter = iconColorFilter
+                            )
+                    )
+                    BasicText(
+                        "Tab ${index + 1}",
+                        style = TextStyle(contentColor, 12.sp)
+                    )
+                }
+            }
+        }
+
     }
 }
