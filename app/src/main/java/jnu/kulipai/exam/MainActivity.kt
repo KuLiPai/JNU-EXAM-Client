@@ -15,11 +15,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.compose.rememberNavController
+import cafe.adriel.voyager.core.screen.Screen
+import cafe.adriel.voyager.navigator.Navigator
+import cafe.adriel.voyager.transitions.ScreenTransition
 import com.materialkolor.PaletteStyle
-import com.ramcosta.composedestinations.DestinationsNavHost
-import com.ramcosta.composedestinations.generated.NavGraphs
-import jnu.kulipai.exam.ui.screens.welcome.WelcomeApp
+import jnu.kulipai.exam.ui.anim.AppTransition
+import jnu.kulipai.exam.ui.screens.home.MainScreen
+import jnu.kulipai.exam.ui.screens.welcome.WelcomeScreen
 import jnu.kulipai.exam.ui.theme.期末无挂Theme
 import kotlinx.coroutines.DelicateCoroutinesApi
 import org.koin.androidx.compose.koinViewModel
@@ -43,7 +45,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setContent {
-            val navController = rememberNavController()
+//            val navController = rememberNavController()
 
             val mainViewModel: MainActivityViewModel = koinViewModel()
 
@@ -80,22 +82,32 @@ class MainActivity : ComponentActivity() {
                         )
                 ) {
                     // 使用 a mutableState 来控制显示欢迎页还是主页
-                    val showWelcomeScreen = remember { mutableStateOf(mainViewModel.appPre.isFirstLaunch) }
-
-                    if (showWelcomeScreen.value) {
-                        WelcomeApp(
-                            //忘了写路由了，只能简单的finish一下，一下子就没有动画了
-                            onFinish = {
-                                // 当引导流程结束时，更新 SharedPreferences 并切换到主页
-                                mainViewModel.appPre.isFirstLaunch = false
-                                showWelcomeScreen.value = false
-                            },
-                            mainViewModel.appPre
-                        )
-                    } else {
-                        DestinationsNavHost(
-                            navGraph = NavGraphs.root,
-                            navController = navController,
+                    val showWelcomeScreen =
+                        remember { mutableStateOf(mainViewModel.appPre.isFirstLaunch) }
+                    var screen: Screen = WelcomeScreen()
+                    if (!showWelcomeScreen.value) {
+                        screen = MainScreen()
+//                        WelcomeApp(
+//                            //忘了写路由了，只能简单的finish一下，一下子就没有动画了
+//                            onFinish = {
+//                                // 当引导流程结束时，更新 SharedPreferences 并切换到主页
+//                                mainViewModel.appPre.isFirstLaunch = false
+//                                showWelcomeScreen.value = false
+//                            },
+//                            mainViewModel.appPre
+//                        )
+                    }
+                    Navigator(screen) { navigator ->
+                        ScreenTransition(
+                            navigator = navigator,
+                            // 只需要这一行调用
+                            transition = {
+                                AppTransition.animate(
+                                    navigator,
+                                    targetState,
+                                    initialState
+                                )
+                            }
                         )
                     }
                 }

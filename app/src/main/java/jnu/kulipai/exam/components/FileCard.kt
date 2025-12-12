@@ -44,12 +44,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.ramcosta.composedestinations.generated.destinations.PdfScreenDestination
-import com.ramcosta.composedestinations.navigation.DestinationsNavigator
+import cafe.adriel.voyager.navigator.Navigator
 import jnu.kulipai.exam.R
 import jnu.kulipai.exam.data.model.DownLoadState
 import jnu.kulipai.exam.data.model.FileItem
 import jnu.kulipai.exam.ui.screens.home.HomeViewModel
+import jnu.kulipai.exam.ui.screens.pdf.PdfScreen
 import jnu.kulipai.exam.util.Api
 import jnu.kulipai.exam.util.Cache
 import jnu.kulipai.exam.util.FileManager
@@ -61,7 +61,7 @@ import java.io.File
 fun FileCard(
     item: FileItem,
     homeViewModel: HomeViewModel,
-    navController: DestinationsNavigator
+    navController: Navigator
 ) { // 接收 FileItem 和 HomeViewModel
 
     val context = LocalContext.current
@@ -194,7 +194,7 @@ fun FileCard(
                                     onClick = {
                                         Cache.currentFile = File(context.filesDir, item.path)
                                         Cache.currentName = item.name
-                                        navController.navigate(PdfScreenDestination)
+                                        navController.push(PdfScreen())
                                     },
                                     contentPadding = PaddingValues(
                                         start = 16.dp,

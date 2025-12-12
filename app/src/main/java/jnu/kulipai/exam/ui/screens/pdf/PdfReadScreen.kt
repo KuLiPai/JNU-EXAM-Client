@@ -23,17 +23,16 @@ import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import cafe.adriel.voyager.core.screen.Screen
+import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.currentOrThrow
 import com.pratikk.jetpdfvue.state.VueFileType
 import com.pratikk.jetpdfvue.state.VueLoadState
 import com.pratikk.jetpdfvue.state.VueResourceType
 import com.pratikk.jetpdfvue.state.rememberHorizontalVueReaderState
-import com.ramcosta.composedestinations.annotation.Destination
-import com.ramcosta.composedestinations.annotation.RootGraph
-import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.setruth.themechange.components.MaskAnimActive
 import com.setruth.themechange.components.MaskBox
 import jnu.kulipai.exam.components.ThemeToggleButton
-import jnu.kulipai.exam.ui.anim.AnimatedNavigation
 import jnu.kulipai.exam.ui.screens.home.HomeViewModel
 import jnu.kulipai.exam.util.Cache
 import kotlinx.coroutines.CoroutineScope
@@ -43,57 +42,58 @@ import org.koin.androidx.compose.koinViewModel
 import java.io.File
 
 
-@Destination<RootGraph>(style = AnimatedNavigation::class)
 @OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun PdfScreen(
-    viewModel: HomeViewModel = koinViewModel(),
-    navigator: DestinationsNavigator
-) {
-    val appPrefs = viewModel.appPre
-    val darkTheme by viewModel.darkTheme.collectAsStateWithLifecycle(0)
-    var isAnimating by remember { mutableStateOf(false) }
-    var pendingThemeChange by remember { mutableStateOf<Boolean?>(null) }
+class PdfScreen : Screen {
+    @Composable
+    override fun Content() {
+
+        val viewModel: HomeViewModel = koinViewModel()
+        LocalNavigator.currentOrThrow
+        val appPrefs = viewModel.appPre
+        val darkTheme by viewModel.darkTheme.collectAsStateWithLifecycle(0)
+        var isAnimating by remember { mutableStateOf(false) }
+        var pendingThemeChange by remember { mutableStateOf<Boolean?>(null) }
 
 
 
-    MaskBox(
-        animTime = 1500L,
-        maskComplete = {
-            pendingThemeChange?.let { newTheme ->
+        MaskBox(
+            animTime = 1500L,
+            maskComplete = {
+                pendingThemeChange?.let { newTheme ->
 
-                viewModel.updateDarkTheme(if (newTheme) 2 else 1)
-                appPrefs.isNight = newTheme
-                pendingThemeChange = null
-            }
-        },
-        animFinish = {
-            isAnimating = false
-        }
-    ) { maskAnimActiveEvent ->
-        PdfScaffold(
-            isDarkTheme = when (darkTheme) {
-                1 -> false
-                2 -> true
-                else -> false
-            },
-            isAnimating = isAnimating,
-            homeViewModel = viewModel,
-            onThemeToggle = { animModel, x, y ->
-                if (!isAnimating) {
-                    isAnimating = true
-                    pendingThemeChange = !when (darkTheme) {
-                        1 -> false
-                        2 -> true
-                        else -> false
-                    }
-                    maskAnimActiveEvent(animModel, x, y)
+                    viewModel.updateDarkTheme(if (newTheme) 2 else 1)
+                    appPrefs.isNight = newTheme
+                    pendingThemeChange = null
                 }
             },
-        )
+            animFinish = {
+                isAnimating = false
+            }
+        ) { maskAnimActiveEvent ->
+            PdfScaffold(
+                isDarkTheme = when (darkTheme) {
+                    1 -> false
+                    2 -> true
+                    else -> false
+                },
+                isAnimating = isAnimating,
+                homeViewModel = viewModel,
+                onThemeToggle = { animModel, x, y ->
+                    if (!isAnimating) {
+                        isAnimating = true
+                        pendingThemeChange = !when (darkTheme) {
+                            1 -> false
+                            2 -> true
+                            else -> false
+                        }
+                        maskAnimActiveEvent(animModel, x, y)
+                    }
+                },
+            )
+        }
+
+
     }
-
-
 }
 
 
@@ -140,7 +140,7 @@ fun PdfScaffold(
 
                     TopAppBar(
                         title = {
-                            Text(Cache.currentName.substring(0,7)+"...")
+                            Text(Cache.currentName.substring(0, 7) + "...")
                         },
                         navigationIcon = {
                         },
@@ -163,7 +163,9 @@ fun PdfScaffold(
     ) { innerPadding ->
         val currentFile = Cache.currentFile
 
-        Column(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
+        Column(modifier = Modifier
+            .padding(innerPadding)
+            .fillMaxSize()) {
             CustomPdfViewer(currentFile)
         }
     }
@@ -200,17 +202,21 @@ fun CustomPdfViewer(
         is VueLoadState.DocumentError -> {
             Text("加载 PDF 失败: ${state.getErrorMessage}")
         }
+
         VueLoadState.DocumentLoaded -> {
             HorizontalSampleB(
-              horizontalVueReaderState = pdfState
+                horizontalVueReaderState = pdfState
             )
         }
+
         VueLoadState.DocumentLoading -> {
             Text("正在加载 PDF...")
         }
+
         VueLoadState.DocumentImporting -> {
             Text("正在导入 PDF...")
         }
+
         VueLoadState.NoDocument -> {
             Text("无 PDF 文件")
         }

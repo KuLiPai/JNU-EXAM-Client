@@ -58,15 +58,15 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import cafe.adriel.voyager.core.screen.Screen
+import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.Navigator
+import cafe.adriel.voyager.navigator.currentOrThrow
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
-import com.ramcosta.composedestinations.annotation.Destination
-import com.ramcosta.composedestinations.annotation.RootGraph
-import com.ramcosta.composedestinations.generated.destinations.SettingScreenDestination
-import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.setruth.themechange.components.MaskAnimActive
 import com.setruth.themechange.components.MaskBox
 import com.setruth.themechange.model.MaskAnimModel
@@ -78,7 +78,7 @@ import jnu.kulipai.exam.components.ThemeToggleButton
 import jnu.kulipai.exam.data.model.DirNode
 import jnu.kulipai.exam.data.model.FileItem
 import jnu.kulipai.exam.data.model.LoadingState
-import jnu.kulipai.exam.ui.anim.AnimatedNavigation
+import jnu.kulipai.exam.ui.screens.setting.SettingScreen
 import jnu.kulipai.exam.util.FileManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -88,88 +88,89 @@ import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
 //这里有笼罩动画，状态栏
-@Destination<RootGraph>(start = true, style = AnimatedNavigation::class)
-@Composable
-fun MainApp(
-    viewModel: HomeViewModel = koinViewModel(), // woq，可以直接注入这个viewModel，我之前还傻乎乎的传参数
-    navigator: DestinationsNavigator
-) {
+class MainScreen : Screen {
+
+    @Composable
+    override fun Content() {
+
+        val navigator = LocalNavigator.currentOrThrow
 
 
-    val launcher =
-        rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/plain")) { uri ->
-            uri?.let {
-                viewModel.exportFileToUri(viewModel.exportPath, it)
+        val viewModel: HomeViewModel = koinViewModel()
+        val launcher =
+            rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/plain")) { uri ->
+                uri?.let {
+                    viewModel.exportFileToUri(viewModel.exportPath, it)
+                }
             }
+
+        // 设置 launcher 给 ViewModel
+        LaunchedEffect(Unit) {
+            viewModel.setExportLauncher(launcher)
         }
+        // wow 这个单例原来可以哦哦，对的
+        // 单例然后保存到viewModel然后就获取然后就唯一的
+        // 全局的!
+        val appPrefs = viewModel.appPre
+        // 初始化一次
 
-    // 设置 launcher 给 ViewModel
-    LaunchedEffect(Unit) {
-        viewModel.setExportLauncher(launcher)
-    }
-    // wow 这个单例原来可以哦哦，对的
-    // 单例然后保存到viewModel然后就获取然后就唯一的
-    // 全局的!
-    val appPrefs = viewModel.appPre
-    // 初始化一次
-
-    // 这个好乱，我问ai怎么优化代码，他让我再写一个类就写一个配置一行代码，我说能不能写进viewModel
-    // ai说x，要写进一个新文件，
-    // 我说f**k(
-    // 已经优化掉了，当我没说
+        // 这个好乱，我问ai怎么优化代码，他让我再写一个类就写一个配置一行代码，我说能不能写进viewModel
+        // ai说x，要写进一个新文件，
+        // 我说f**k(
+        // 已经优化掉了，当我没说
 
 
-    val darkTheme by viewModel.darkTheme.collectAsStateWithLifecycle(0)
-    var isAnimating by remember { mutableStateOf(false) }
-    var pendingThemeChange by remember { mutableStateOf<Boolean?>(null) }
+        val darkTheme by viewModel.darkTheme.collectAsStateWithLifecycle(0)
+        var isAnimating by remember { mutableStateOf(false) }
+        var pendingThemeChange by remember { mutableStateOf<Boolean?>(null) }
 
 
 
-    MaskBox(
-        animTime = 800L,
-        maskComplete = {
-            pendingThemeChange?.let { newTheme ->
+        MaskBox(
+            animTime = 800L,
+            maskComplete = {
+                pendingThemeChange?.let { newTheme ->
 
-                viewModel.updateDarkTheme(if (newTheme) 2 else 1)
-                appPrefs.isNight = newTheme
-                pendingThemeChange = null
-            }
-        },
-        animFinish = {
-            isAnimating = false
-        }
-    ) { maskAnimActiveEvent ->
-        MainScaffold(
-            isDarkTheme = when (darkTheme) {
-                1 -> false
-                2 -> true
-                else -> false
-            },
-            isAnimating = isAnimating,
-            homeViewModel = viewModel,
-            onThemeToggle = { animModel, x, y ->
-                if (!isAnimating) {
-                    isAnimating = true
-                    pendingThemeChange = !when (darkTheme) {
-                        1 -> false
-                        2 -> true
-                        else -> false
-                    }
-                    maskAnimActiveEvent(
-                        if (when (darkTheme) {
-                                1 -> false
-                                2 -> true
-                                else -> false
-                            }
-                        ) MaskAnimModel.EXPEND else MaskAnimModel.SHRINK, x, y
-                    )
+                    viewModel.updateDarkTheme(if (newTheme) 2 else 1)
+                    appPrefs.isNight = newTheme
+                    pendingThemeChange = null
                 }
             },
-            navController = navigator,
-        )
+            animFinish = {
+                isAnimating = false
+            }
+        ) { maskAnimActiveEvent ->
+            MainScaffold(
+                isDarkTheme = when (darkTheme) {
+                    1 -> false
+                    2 -> true
+                    else -> false
+                },
+                isAnimating = isAnimating,
+                homeViewModel = viewModel,
+                onThemeToggle = { animModel, x, y ->
+                    if (!isAnimating) {
+                        isAnimating = true
+                        pendingThemeChange = !when (darkTheme) {
+                            1 -> false
+                            2 -> true
+                            else -> false
+                        }
+                        maskAnimActiveEvent(
+                            if (when (darkTheme) {
+                                    1 -> false
+                                    2 -> true
+                                    else -> false
+                                }
+                            ) MaskAnimModel.EXPEND else MaskAnimModel.SHRINK, x, y
+                        )
+                    }
+                },
+                navController = navigator,
+            )
+        }
     }
 }
-
 
 //非常棒的Material 3 Experiment
 @OptIn(ExperimentalMaterial3Api::class)
@@ -180,7 +181,7 @@ fun MainScaffold(
     isAnimating: Boolean,
     homeViewModel: HomeViewModel, // 接收 ViewModel
     onThemeToggle: MaskAnimActive,
-    navController: DestinationsNavigator
+    navController: Navigator
 ) {
 
     val pwd = homeViewModel.currentPath.collectAsState()
@@ -287,7 +288,7 @@ fun MainScaffold(
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             IconButton(onClick = {
-                                navController.navigate(SettingScreenDestination)
+                                navController.push(SettingScreen())
                             }) {
                                 Icon(
                                     imageVector = Icons.Default.Settings,
@@ -378,11 +379,12 @@ fun MainScaffold(
 fun MainContent(
     modifier: Modifier = Modifier,
     homeViewModel: HomeViewModel,
-    navController: DestinationsNavigator
+    navController: Navigator
 ) {
 
     val appPrefs = homeViewModel.appPre
-    val loadingState = homeViewModel.loadingState.collectAsState() // 从 ViewModel 收集 loadingState
+    val loadingState =
+        homeViewModel.loadingState.collectAsState() // 从 ViewModel 收集 loadingState
     val pwd = homeViewModel.currentPath.collectAsState() // 从 ViewModel 收集 loadingState
     val root = homeViewModel.root.collectAsState() // 从 ViewModel 收集 loadingState
     val searchText = homeViewModel.searchText.collectAsState() // 从 ViewModel 收集 loadingState

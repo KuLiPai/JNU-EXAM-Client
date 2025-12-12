@@ -1,9 +1,6 @@
 package jnu.kulipai.exam.ui.screens.welcome
 
-import androidx.compose.animation.AnimatedContentTransitionScope
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -45,9 +42,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
+import cafe.adriel.voyager.core.screen.Screen
+import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.currentOrThrow
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
@@ -58,10 +55,13 @@ import com.github.compose.waveloading.WaveLoading
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import jnu.kulipai.exam.AppPreferences
 import jnu.kulipai.exam.R
-import jnu.kulipai.exam.ui.theme.期末无挂Theme
+import jnu.kulipai.exam.ui.anim.SlideAnimationScreen
+import jnu.kulipai.exam.ui.screens.home.MainScreen
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.koin.compose.koinInject
+import org.koin.java.KoinJavaComponent.inject
 import java.net.InetSocketAddress
 import java.net.Socket
 
@@ -90,6 +90,48 @@ var chipborderColor = Color(0xffd8c2bc)
 
 
 lateinit var appPre: AppPreferences
+
+// 路由WelcomeScreen页面
+class WelcomeScreen : Screen {
+    @Composable
+    override fun Content() {
+        appPre = koinInject()
+        val isSystemDark = isSystemInDarkTheme()
+        var isDarkTheme by remember { mutableStateOf(isSystemDark) }
+        val systemUiController = rememberSystemUiController()
+
+        LaunchedEffect(isDarkTheme) {
+            systemUiController.setSystemBarsColor(color = Color.Transparent, darkIcons = !isDarkTheme)
+        }
+        if (isDarkTheme) {
+            //night
+            one_background = Color(0xff111318)
+            two_background = Color(0xff4e472a)
+            three_background = Color(0xff392e2b)
+
+            one_containerColor = Color(0xff284777)
+            one_contentColor = Color(0xffd6e3ff)
+
+            two_contentColor = Color(0xfff8e287)
+            two_containerColor = Color(0xff6d5e0f)
+            two_mainText = Color(0xffeee2bc)
+            two_secondText = Color(0xffcdc6b4)
+
+            three_text = Color(0xffffdbd1)
+            three_smallText = Color(0xffffffff)
+            three_contentColor = Color(0xffffdbd1)
+            three_containerColor = Color(0xff723523)
+
+            chipcolor =  Color(0xff5d4037)
+            chipborderColor = Color(0xff53433f)
+
+        }
+        OneScreen().Content()
+
+    }
+}
+
+
 
 // 为 WelcomeApp 添加 onFinish 回调
 @Composable
@@ -127,111 +169,128 @@ fun WelcomeApp(onFinish: () -> Unit, appPreferences: AppPreferences) {
 
     }
 
-    期末无挂Theme(darkTheme = isDarkTheme) {
-        NavigationApp(onFinish = onFinish) // 将回调传递下去
-    }
+
 }
 
-// 页面路由定义
-sealed class Screen(val route: String) {
-    object One : Screen("one_screen")
-    object Two : Screen("two_screen")
-    object Three : Screen("three_screen")
-}
 
 // 动画参数
 private const val ANIMATION_DURATION = 400
 private val smoothEasing = FastOutSlowInEasing
 
-// 为 NavigationApp 添加 onFinish 回调
-@OptIn(ExperimentalAnimationApi::class)
-@Composable
-fun NavigationApp(onFinish: () -> Unit) {
-    val navController = rememberNavController()
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+class OneScreen : Screen, SlideAnimationScreen {
 
-    //调试巨卡的动画，打包后一般，只能说一般
-    NavHost(
-        navController = navController,
-        startDestination = Screen.One.route,
-        enterTransition = {
-            slideIntoContainer(
-                towards = AnimatedContentTransitionScope.SlideDirection.Start,
-                animationSpec = tween(durationMillis = ANIMATION_DURATION, easing = smoothEasing)
-            )
-        },
-        exitTransition = {
-            slideOutOfContainer(
-                towards = AnimatedContentTransitionScope.SlideDirection.Start,
-                animationSpec = tween(durationMillis = ANIMATION_DURATION, easing = smoothEasing)
-            )
-        },
-        popEnterTransition = {
-            slideIntoContainer(
-                towards = AnimatedContentTransitionScope.SlideDirection.End,
-                animationSpec = tween(durationMillis = ANIMATION_DURATION, easing = smoothEasing)
-            )
-        },
-        popExitTransition = {
-            slideOutOfContainer(
-                towards = AnimatedContentTransitionScope.SlideDirection.End,
-                animationSpec = tween(durationMillis = ANIMATION_DURATION, easing = smoothEasing)
-            )
-        }
-    ) {
-        composable(route = Screen.One.route) { OneScreen(navController = navController) }
-        composable(route = Screen.Two.route) { TwoScreen(navController = navController) }
-        composable(route = Screen.Three.route) {
-            // 将 onFinish 回调传递给最终页面
-            ThreeScreen(onFinish = onFinish)
+    @Composable
+    override fun Content() {
+        val navigator = LocalNavigator.currentOrThrow
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(one_background),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Box {
+                Text(
+                    "Welcome To\n期末无挂",
+                    style = MaterialTheme.typography.displayMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    lineHeight = 64.sp,//默认的有点小
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(24.dp, 88.dp, 0.dp, 0.dp)
+                )
+                WaveLoading(progress = 0.6f, backDrawType = DrawType.None) {
+                    Image(
+                        painter = painterResource(id = R.drawable.logo),
+                        contentDescription = "",
+                        modifier = Modifier.scale(1.3f)
+                    )
+                }
+                FloatingActionButton(
+                    containerColor = one_containerColor,
+                    contentColor = one_contentColor,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(0.dp, 0.dp, 0.dp, 64.dp),
+                    onClick = { navigator.push(TwoScreen()) }
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        //全新加载变形等待
+                        LoadingIndicator(
+                            color = one_contentColor,
+                            modifier = Modifier.size(24.dp),
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Next")
+                    }
+                }
+            }
         }
     }
 }
 
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-fun OneScreen(navController: NavController) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(one_background),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Box {
-            Text(
-                "Welcome To\n期末无挂",
-                style = MaterialTheme.typography.displayMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-                lineHeight = 64.sp,//默认的有点小
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(24.dp, 88.dp, 0.dp, 0.dp)
+@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3ExpressiveApi::class)
+class TwoScreen : Screen, SlideAnimationScreen {
+
+    @Composable
+    override fun Content() {
+
+        val navigator = LocalNavigator.currentOrThrow
+
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(two_background)
+        ) {
+            val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.lib_reference_summer))
+            val progress by animateLottieCompositionAsState(
+                composition = composition,
+                iterations = LottieConstants.IterateForever
             )
-            WaveLoading(progress = 0.6f, backDrawType = DrawType.None) {
-                Image(
-                    painter = painterResource(id = R.drawable.logo),
-                    contentDescription = "",
-                    modifier = Modifier.scale(1.3f)
-                )
-            }
+            LottieAnimation(
+                modifier = Modifier
+                    .size(352.dp)
+                    .align(Alignment.Center)
+                    .offset(0.dp, -128.dp),
+                composition = composition,
+                progress = { progress },
+            )
+            Text(
+                "不挂科",
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .offset(0.dp, 88.dp),
+                style = MaterialTheme.typography.displayMedium.copy(color = two_mainText),
+            )
+
+            Text(
+                "过过过过过过过过过", // 难蚌，就这样吧
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .offset(0.dp, 164.dp)
+                    .padding(32.dp),
+                style = MaterialTheme.typography.displaySmall.copy(color = two_secondText),
+            )
             FloatingActionButton(
-                containerColor = one_containerColor,
-                contentColor = one_contentColor,
+                contentColor = two_contentColor,
+                containerColor = two_containerColor,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .padding(0.dp, 0.dp, 0.dp, 64.dp),
-                onClick = { navController.navigate(Screen.Two.route) }
+                onClick = { navigator.push(ThreeScreen()) }
             ) {
                 Row(
                     modifier = Modifier.padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    //全新加载变形等待
-                    LoadingIndicator(
-                        color = one_contentColor,
-                        modifier = Modifier.size(24.dp),
-                    )
+                    LoadingIndicator(color = two_contentColor, modifier = Modifier.size(24.dp))
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Next")
                 }
@@ -240,229 +299,179 @@ fun OneScreen(navController: NavController) {
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-fun TwoScreen(navController: NavController) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(two_background)
-    ) {
-        val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.lib_reference_summer))
-        val progress by animateLottieCompositionAsState(
-            composition = composition,
-            iterations = LottieConstants.IterateForever
-        )
-        LottieAnimation(
-            modifier = Modifier
-                .size(352.dp)
-                .align(Alignment.Center)
-                .offset(0.dp, -128.dp),
-            composition = composition,
-            progress = { progress },
-        )
-        Text(
-            "不挂科",
-            modifier = Modifier
-                .align(Alignment.Center)
-                .offset(0.dp, 88.dp),
-            style = MaterialTheme.typography.displayMedium.copy(color = two_mainText),
-        )
-
-        Text(
-            "过过过过过过过过过", // 难蚌，就这样吧
-            modifier = Modifier
-                .align(Alignment.Center)
-                .offset(0.dp, 164.dp)
-                .padding(32.dp),
-            style = MaterialTheme.typography.displaySmall.copy(color = two_secondText),
-        )
-        FloatingActionButton(
-            contentColor = two_contentColor,
-            containerColor = two_containerColor,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(0.dp, 0.dp, 0.dp, 64.dp),
-            onClick = { navController.navigate(Screen.Three.route) }
-        ) {
-            Row(
-                modifier = Modifier.padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                LoadingIndicator(color = two_contentColor, modifier = Modifier.size(24.dp))
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Next")
-            }
-        }
-    }
-}
-
 // 为 ThreeScreen 添加 onFinish 回调
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-fun ThreeScreen(onFinish: () -> Unit) {
-    Box(
 
-        modifier = Modifier
-            .fillMaxSize()
-            .background(three_background),
+class ThreeScreen : Screen, SlideAnimationScreen {
+    @Composable
+    override fun Content() {
 
-        ) {
+        val navigator = LocalNavigator.currentOrThrow
 
-        val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.lib_detail_rocket))
-        val progress by animateLottieCompositionAsState(
-            composition = composition,
-            iterations = LottieConstants.IterateForever,
-            speed = 1f
-        )
-
-        LottieAnimation(
-            modifier = Modifier
-                .width(352.dp)
-                .height(352.dp)
-                .align(Alignment.Center)
-                .offset(0.dp, -128.dp),
-            composition = composition,
-            progress = { progress },
-        )
-
-        Text(
-            "请选择仓库",
-            modifier = Modifier
-                .align(Alignment.Center)
-                .offset(0.dp, 64.dp),
-            style = MaterialTheme.typography.displayMedium.copy(
-                color = three_text
-            ),
-        )
-
-        var selected by remember { mutableStateOf(true) }
         Box(
+
             modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.Center)
-                .padding(64.dp)
-                .offset(0.dp, 166.dp),
-        ) {
-            Column(
-                modifier = Modifier.align(Alignment.TopStart),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+                .fillMaxSize()
+                .background(three_background),
+
             ) {
-                FilterChip(
-                    onClick = { selected = !selected },
-                    label = {
-                        Text("Gitee", color = three_text)
-                    },
-                    selected = selected,
-                    border = FilterChipDefaults.filterChipBorder(
-                        enabled = true,
+
+            val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.lib_detail_rocket))
+            val progress by animateLottieCompositionAsState(
+                composition = composition,
+                iterations = LottieConstants.IterateForever,
+                speed = 1f
+            )
+
+            LottieAnimation(
+                modifier = Modifier
+                    .width(352.dp)
+                    .height(352.dp)
+                    .align(Alignment.Center)
+                    .offset(0.dp, -128.dp),
+                composition = composition,
+                progress = { progress },
+            )
+
+            Text(
+                "请选择仓库",
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .offset(0.dp, 64.dp),
+                style = MaterialTheme.typography.displayMedium.copy(
+                    color = three_text
+                ),
+            )
+
+            var selected by remember { mutableStateOf(true) }
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.Center)
+                    .padding(64.dp)
+                    .offset(0.dp, 166.dp),
+            ) {
+                Column(
+                    modifier = Modifier.align(Alignment.TopStart),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    FilterChip(
+                        onClick = { selected = !selected },
+                        label = {
+                            Text("Gitee", color = three_text)
+                        },
                         selected = selected,
-                        borderColor = chipborderColor, // 未选中时边框颜色
-                    ),
-                    colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = chipcolor, // 选中时背景色
-                    ),
-                    leadingIcon = if (selected) {
-                        {
-                            Icon(
-                                tint = three_contentColor,
-                                imageVector = Icons.Filled.Done,
-                                contentDescription = "Done icon",
-                                modifier = Modifier.size(FilterChipDefaults.IconSize)
-                            )
-                        }
-                    } else {
-                        {
+                        border = FilterChipDefaults.filterChipBorder(
+                            enabled = true,
+                            selected = selected,
+                            borderColor = chipborderColor, // 未选中时边框颜色
+                        ),
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = chipcolor, // 选中时背景色
+                        ),
+                        leadingIcon = if (selected) {
+                            {
+                                Icon(
+                                    tint = three_contentColor,
+                                    imageVector = Icons.Filled.Done,
+                                    contentDescription = "Done icon",
+                                    modifier = Modifier.size(FilterChipDefaults.IconSize)
+                                )
+                            }
+                        } else {
+                            {
 
-                            Icon(
-                                painter = painterResource(id = R.drawable.gitee_svgrepo_com),
-                                tint = three_text,
-                                contentDescription = "Done icon",
-                                modifier = Modifier.size(FilterChipDefaults.IconSize)
-                            )
-                        }
-
-
-                    },
-                )
-
-                PingText("www.gitee.com")
-            }
+                                Icon(
+                                    painter = painterResource(id = R.drawable.gitee_svgrepo_com),
+                                    tint = three_text,
+                                    contentDescription = "Done icon",
+                                    modifier = Modifier.size(FilterChipDefaults.IconSize)
+                                )
+                            }
 
 
-            Column(
-                modifier = Modifier.align(Alignment.TopEnd),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
+                        },
+                    )
+
+                    PingText("www.gitee.com")
+                }
 
 
-                FilterChip(
-                    onClick = { selected = !selected },
-                    label = {
-                        Text("Github", color = three_text)
-                    },
-                    border = FilterChipDefaults.filterChipBorder(
-                        enabled = true,
+                Column(
+                    modifier = Modifier.align(Alignment.TopEnd),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+
+
+                    FilterChip(
+                        onClick = { selected = !selected },
+                        label = {
+                            Text("Github", color = three_text)
+                        },
+                        border = FilterChipDefaults.filterChipBorder(
+                            enabled = true,
+                            selected = !selected,
+                            borderColor = chipborderColor,                   // 未选中时边框颜色
+                        ),
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = chipcolor,       // 选中时背景色
+                        ),
                         selected = !selected,
-                        borderColor = chipborderColor,                   // 未选中时边框颜色
-                    ),
-                    colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = chipcolor,       // 选中时背景色
-                    ),
-                    selected = !selected,
-                    leadingIcon = if (!selected) {
-                        {
-                            Icon(
-                                tint = three_contentColor,
-                                imageVector = Icons.Filled.Done,
-                                contentDescription = "Done icon",
-                                modifier = Modifier.size(FilterChipDefaults.IconSize)
-                            )
-                        }
-                    } else {
-                        {
-                            Icon(
-                                painter = painterResource(id = R.drawable.github_142_svgrepo_com),
-                                tint = three_text,
-                                contentDescription = "Done icon",
-                                modifier = Modifier.size(FilterChipDefaults.IconSize)
-                            )
-                        }
-                    },
-                )
+                        leadingIcon = if (!selected) {
+                            {
+                                Icon(
+                                    tint = three_contentColor,
+                                    imageVector = Icons.Filled.Done,
+                                    contentDescription = "Done icon",
+                                    modifier = Modifier.size(FilterChipDefaults.IconSize)
+                                )
+                            }
+                        } else {
+                            {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.github_142_svgrepo_com),
+                                    tint = three_text,
+                                    contentDescription = "Done icon",
+                                    modifier = Modifier.size(FilterChipDefaults.IconSize)
+                                )
+                            }
+                        },
+                    )
 
-                PingText("www.github.com")
+                    PingText("www.github.com")
+
+                }
 
             }
 
-        }
 
-
-        FloatingActionButton(
-            contentColor = three_contentColor,
-            containerColor = three_containerColor,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(0.dp, 0.dp, 0.dp, 64.dp),
-            onClick = {
-                appPre.repo = if (selected) "gitee" else "github"
-                onFinish() // 调用回调，切换到主界面
-            }
-        ) {
-            Row(
-                modifier = Modifier.padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
+            FloatingActionButton(
+                contentColor = three_contentColor,
+                containerColor = three_containerColor,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(0.dp, 0.dp, 0.dp, 64.dp),
+                onClick = {
+                    appPre.repo = if (selected) "gitee" else "github"
+                    appPre.isFirstLaunch = false
+                    navigator.replaceAll(MainScreen())
+                }
             ) {
-                LoadingIndicator(
-                    color = three_contentColor,
-                    modifier = Modifier
-                        .width(24.dp)
-                        .height(24.dp),
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Welcome")
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    LoadingIndicator(
+                        color = three_contentColor,
+                        modifier = Modifier
+                            .width(24.dp)
+                            .height(24.dp),
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Welcome")
+                }
             }
         }
     }

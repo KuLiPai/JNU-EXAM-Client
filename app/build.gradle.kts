@@ -134,8 +134,11 @@ dependencies {
 
     // destinations自动路由，路由器（
     //wowwowow 太好用了吧，看文档晕晕的，用下来也太爽了，只能说无敌
-    implementation(libs.core)
-    ksp(libs.compose.destinations.ksp)
+    // 12.12 突然用起来没那么方便了，不知道为什么，总之我曾经用过，
+    // 当时用的时候直接用的最新办，官方大概api，一个ai都写不对，影视看文档写出来了
+    // h
+//    implementation(libs.core)
+//    ksp(libs.compose.destinations.ksp)
 
 
     // kolor!!
@@ -169,5 +172,23 @@ dependencies {
     implementation(libs.ktor.serialization.kotlinx.json)
 
 
+    //kyant超绝液态玻璃!!!
+    implementation(libs.backdrop)
+    // 你可能听说过G3圆角G4圆角，但是这可是G8圆角!!
+    implementation(libs.capsule)
+
+    // voyager 不依赖ksp的路由，或许以后能升级KMP。
+    // Navigator 核心
+    implementation(libs.voyager.navigator)
+    // ScreenModel（可选，用于每个 Screen 有自己的状态/ViewModel）
+    implementation(libs.voyager.screenmodel)
+    // BottomSheetNavigator（可选，如果你需要底部弹窗导航）
+    implementation(libs.voyager.bottom.sheet.navigator)
+    // TabNavigator（可选，如果你有 Tab 页面）
+    implementation(libs.voyager.tab.navigator)
+    // Transitions（可选，页面切换动画）
+    implementation(libs.voyager.transitions)
+    // Koin 集成（必须，如果你用 Koin 注入 ViewModel / Screen）
+    implementation(libs.voyager.koin)
 }
 

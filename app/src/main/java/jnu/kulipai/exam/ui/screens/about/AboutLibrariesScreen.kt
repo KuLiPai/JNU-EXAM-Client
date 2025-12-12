@@ -15,44 +15,47 @@ import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import cafe.adriel.voyager.core.screen.Screen
+import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.currentOrThrow
 import com.mikepenz.aboutlibraries.ui.compose.android.rememberLibraries
 import com.mikepenz.aboutlibraries.ui.compose.m3.LibrariesContainer
-import com.ramcosta.composedestinations.annotation.Destination
-import com.ramcosta.composedestinations.annotation.RootGraph
-import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import jnu.kulipai.exam.R
-import jnu.kulipai.exam.ui.anim.AnimatedNavigation
 
-@Destination<RootGraph>(style = AnimatedNavigation::class)
+
 @OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun AboutLibrariesScreen(
-    navigator: DestinationsNavigator
-) {
-    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
-    Scaffold(
-        modifier = Modifier
-            .nestedScroll(scrollBehavior.nestedScrollConnection),
-        topBar = {
-            TopAppBar(
-                title = { Text("开源许可证") },
-                scrollBehavior = scrollBehavior,
-                navigationIcon = {
-                    IconButton(onClick = { navigator.popBackStack() }) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = null
-                        )
-                    }
-                }
-            )
-        },
-    ) { innerPadding ->
+class AboutLibrariesScreen : Screen {
+    @Composable
+    override fun Content() {
 
-        val libraries = rememberLibraries(R.raw.aboutlibraries)
-        LibrariesContainer(
-            libraries = libraries.value,
-            modifier = Modifier.fillMaxSize().padding(innerPadding)
-        )
+        val navigator = LocalNavigator.currentOrThrow
+        val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
+        Scaffold(
+            modifier = Modifier
+                .nestedScroll(scrollBehavior.nestedScrollConnection),
+            topBar = {
+                TopAppBar(
+                    title = { Text("开源许可证") },
+                    scrollBehavior = scrollBehavior,
+                    navigationIcon = {
+                        IconButton(onClick = { navigator.pop() }) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = null
+                            )
+                        }
+                    }
+                )
+            },
+        ) { innerPadding ->
+
+            val libraries = rememberLibraries(R.raw.aboutlibraries)
+            LibrariesContainer(
+                libraries = libraries.value,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+            )
+        }
     }
 }
