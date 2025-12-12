@@ -1,13 +1,12 @@
 package jnu.kulipai.exam.data.repository
 
 import android.content.Context
-import jakarta.inject.Inject
 import jnu.kulipai.exam.AppPreferences
 import jnu.kulipai.exam.data.model.DirNode
 import jnu.kulipai.exam.util.Api
 import jnu.kulipai.exam.util.FileManager
 
-class FileRepository @Inject constructor(
+class FileRepository (
     private val fileManager: FileManager,
     private val api: Api,
     private val appPreferences: AppPreferences // 注入 AppPreferences 以获取 repo 设置

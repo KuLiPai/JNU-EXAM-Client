@@ -9,7 +9,6 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dagger.hilt.android.lifecycle.HiltViewModel
 import jnu.kulipai.exam.AppPreferences
 import jnu.kulipai.exam.data.model.DirNode
 import jnu.kulipai.exam.data.model.DownLoadState
@@ -27,16 +26,14 @@ import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileInputStream
 import java.io.OutputStream
-import javax.inject.Inject
 
 //哇好像很方便，在一个地方统一管理需要context的函数
 //用流来管理全局变量，神奇的感觉:))))))
 
-@HiltViewModel
-class HomeViewModel @Inject constructor(
+class HomeViewModel(
     private val fileRepository: FileRepository,
     private val appPreferences: AppPreferences,
-    private val application: Application, // Hilt 可以注入 Application Context
+    private val application: Application,
     private val themeSettingsManager: ThemeSettingsManager,
 
     ) : ViewModel() {

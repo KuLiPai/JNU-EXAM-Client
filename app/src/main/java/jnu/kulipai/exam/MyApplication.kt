@@ -1,6 +1,15 @@
 package jnu.kulipai.exam
 import android.app.Application
-import dagger.hilt.android.HiltAndroidApp
+import jnu.kulipai.exam.di.appModule
+import org.koin.android.ext.koin.androidContext
+import org.koin.core.context.startKoin
 
-@HiltAndroidApp
-class MyApplication : Application()
+class MyApplication : Application() {
+    override fun onCreate() {
+        super.onCreate()
+        startKoin {
+            androidContext(this@MyApplication)
+            modules(appModule)
+        }
+    }
+}

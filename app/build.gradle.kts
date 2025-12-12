@@ -3,7 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
-    alias(libs.plugins.hilt)
+//    alias(libs.plugins.hilt)
     alias(libs.plugins.aboutLibraries)
 
 }
@@ -115,7 +115,8 @@ dependencies {
     //波浪加载动画
     implementation(libs.composewaveloading)
     //老牌http轻量强大完整库
-    implementation(libs.okhttp)
+    //由于某些原因不用了，取而代之是Ktor，或许以后能升级KMP，总之kotlin万岁
+//    implementation(libs.okhttp)
 
     // 目前我见过最好的pdf预览库了
     implementation(libs.jetpdfvue)
@@ -125,9 +126,11 @@ dependencies {
 
     // Hilt 依赖
     // 在compose中感觉能用上，第一次用
-    implementation(libs.hilt.android)
-    ksp(libs.hilt.android.compiler)
-    implementation(libs.androidx.hilt.navigation.compose)
+    // 由于某些原因不用了，虽然是安卓官方推荐的，取而代之是Koin，或许以后能升级KMP。总之kotlin万岁
+    // 可能hilt有点神秘，或许是复杂了
+//    implementation(libs.hilt.android)
+//    ksp(libs.hilt.android.compiler)
+//    implementation(libs.androidx.hilt.navigation.compose)
 
     // destinations自动路由，路由器（
     //wowwowow 太好用了吧，看文档晕晕的，用下来也太爽了，只能说无敌
@@ -145,6 +148,25 @@ dependencies {
     implementation(libs.aboutlibraries.compose.core)
     implementation(libs.aboutlibraries.core)
     implementation(libs.aboutlibraries.compose.m3)
+
+
+    // Koin BOM
+    // 轻量而kotlin友好现代方便易懂简单的注入
+    implementation(platform(libs.koin.bom))
+
+    // Koin Core
+    implementation(libs.koin.core)
+    implementation(libs.koin.android)
+
+    // Koin Compose
+    implementation(libs.koin.androidx.compose)
+
+    // Ktor，现代轻量而kotlin友好的网络库
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.client.cio)
+    implementation(libs.ktor.client.logging)
+    implementation(libs.ktor.client.content.negotiation)
+    implementation(libs.ktor.serialization.kotlinx.json)
 
 
 }

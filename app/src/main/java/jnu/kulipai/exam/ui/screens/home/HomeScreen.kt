@@ -57,7 +57,6 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
@@ -86,12 +85,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
 
 //这里有笼罩动画，状态栏
 @Destination<RootGraph>(start = true, style = AnimatedNavigation::class)
 @Composable
 fun MainApp(
-    viewModel: HomeViewModel = hiltViewModel(), // woq，可以直接注入这个viewModel，我之前还傻乎乎的传参数
+    viewModel: HomeViewModel = koinViewModel(), // woq，可以直接注入这个viewModel，我之前还傻乎乎的传参数
     navigator: DestinationsNavigator
 ) {
 
@@ -126,7 +126,7 @@ fun MainApp(
 
 
     MaskBox(
-        animTime = 1500L,
+        animTime = 800L,
         maskComplete = {
             pendingThemeChange?.let { newTheme ->
 

@@ -9,6 +9,7 @@ datastorePreferences = "1.1.7"
 hiltAndroid = "2.56.2"
 hiltNavigationCompose = "1.2.0"
 jetpdfvue = "1.0.7"
+koinBom = "4.1.1"
 kotlin = "2.2.0"
 ksp = "2.2.0-2.0.2"
 compose-destinations = "2.2.0"
@@ -17,6 +18,11 @@ coreKtx = "1.16.0"
 junit = "4.13.2"
 junitVersion = "1.2.1"
 espressoCore = "3.6.1"
+ktorClientCio = "3.3.3"
+ktorClientContentNegotiation = "3.3.3"
+ktorClientCore = "3.3.3"
+ktorClientLogging = "3.3.3"
+ktorSerializationKotlinxJson = "3.3.3"
 lifecycleRuntimeKtx = "2.9.2"
 activityCompose = "1.10.1"
 composeBom = "2025.07.00"
@@ -34,6 +40,15 @@ pdfCompose = "1.0.0-alpha10"
 
 [libraries]
 jetpdfvue = { module = "com.github.pratikksahu:JetPDFVue", version.ref = "jetpdfvue" }
+koin-android = { module = "io.insert-koin:koin-android" }
+koin-androidx-compose = { module = "io.insert-koin:koin-androidx-compose" }
+koin-bom = { module = "io.insert-koin:koin-bom", version.ref = "koinBom" }
+koin-core = { module = "io.insert-koin:koin-core" }
+ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktorClientCio" }
+ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktorClientContentNegotiation" }
+ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktorClientCore" }
+ktor-client-logging = { module = "io.ktor:ktor-client-logging", version.ref = "ktorClientLogging" }
+ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktorSerializationKotlinxJson" }
 material = { group = "androidx.compose.material", name = "material" }
 appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 accompanist-systemuicontroller = { module = "com.google.accompanist:accompanist-systemuicontroller", version.ref = "accompanistSystemuicontroller" }

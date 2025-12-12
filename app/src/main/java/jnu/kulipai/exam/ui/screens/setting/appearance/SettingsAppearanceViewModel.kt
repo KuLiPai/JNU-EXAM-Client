@@ -1,16 +1,14 @@
-package com.kaajjo.libresudoku.ui.more.settings.appearance
+package jnu.kulipai.exam.ui.screens.setting.appearance
 
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dagger.hilt.android.lifecycle.HiltViewModel
 import jnu.kulipai.exam.ui.theme.ThemeSettingsManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
-@HiltViewModel
-class SettingsAppearanceViewModel @Inject constructor(
+
+class SettingsAppearanceViewModel (
     private val themeSettings: ThemeSettingsManager
 ) : ViewModel() {
     val darkTheme by lazy {

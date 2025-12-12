@@ -1,17 +1,13 @@
 package jnu.kulipai.exam
 
 import androidx.lifecycle.ViewModel
-import dagger.hilt.android.lifecycle.HiltViewModel
 import jnu.kulipai.exam.ui.theme.ThemeSettingsManager
-import javax.inject.Inject
 
-@HiltViewModel
+
 class MainActivityViewModel
-@Inject constructor(
+    (
     themeSettingsManager: ThemeSettingsManager,
     appPreferences: AppPreferences,
-
-//    appSettingsManager: AppSettingsManager
 ) : ViewModel() {
 
     val appPre = appPreferences

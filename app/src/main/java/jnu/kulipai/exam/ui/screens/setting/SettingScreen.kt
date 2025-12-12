@@ -43,8 +43,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
-import com.kaajjo.libresudoku.ui.more.settings.components.AppThemePreviewItem
+import jnu.kulipai.exam.ui.screens.setting.components.AppThemePreviewItem
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootGraph
 import com.ramcosta.composedestinations.generated.destinations.AboutScreenDestination
@@ -59,12 +58,13 @@ import jnu.kulipai.exam.components.collapsing_topappbar.rememberTopAppBarScrollB
 import jnu.kulipai.exam.ui.anim.AnimatedNavigation
 import jnu.kulipai.exam.ui.screens.home.HomeViewModel
 import kotlinx.coroutines.delay
+import org.koin.androidx.compose.koinViewModel
 
 @Destination<RootGraph>(style = AnimatedNavigation::class)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingScreen(
-    viewModel: HomeViewModel = hiltViewModel(),
+    viewModel: HomeViewModel = koinViewModel(),
     navigator: DestinationsNavigator
 ) {
 

@@ -1,4 +1,4 @@
-package com.kaajjo.libresudoku.ui.more.settings.appearance
+package jnu.kulipai.exam.ui.screens.setting.appearance
 
 import android.os.Build
 import android.widget.Toast
@@ -37,10 +37,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.toColorInt
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.kaajjo.libresudoku.ui.more.settings.components.AppThemePreviewItem
-import com.kaajjo.libresudoku.ui.more.settings.components.ColorPickerDialog
+import jnu.kulipai.exam.ui.screens.setting.components.AppThemePreviewItem
+import jnu.kulipai.exam.ui.screens.setting.components.ColorPickerDialog
 import com.materialkolor.PaletteStyle
 import com.materialkolor.rememberDynamicColorScheme
 import com.ramcosta.composedestinations.annotation.Destination
@@ -57,12 +56,13 @@ import jnu.kulipai.exam.ui.screens.setting.SelectionDialog
 import jnu.kulipai.exam.ui.screens.setting.SettingsScaffoldLazyColumn
 import jnu.kulipai.exam.ui.theme.ThemeSettingsManager
 import jnu.kulipai.exam.ui.theme.期末无挂Theme
+import org.koin.androidx.compose.koinViewModel
 
 @Destination<RootGraph>(style = AnimatedNavigation::class)
 @OptIn(ExperimentalStdlibApi::class)
 @Composable
 fun SettingsAppearanceScreen(
-    viewModel: SettingsAppearanceViewModel = hiltViewModel(),
+    viewModel: SettingsAppearanceViewModel = koinViewModel(),
     navigator: DestinationsNavigator
 ) {
     val context = LocalContext.current

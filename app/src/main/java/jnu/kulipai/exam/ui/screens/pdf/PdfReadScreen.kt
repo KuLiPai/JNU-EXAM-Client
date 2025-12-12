@@ -22,7 +22,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pratikk.jetpdfvue.state.VueFileType
 import com.pratikk.jetpdfvue.state.VueLoadState
@@ -40,6 +39,7 @@ import jnu.kulipai.exam.util.Cache
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import org.koin.androidx.compose.koinViewModel
 import java.io.File
 
 
@@ -47,7 +47,7 @@ import java.io.File
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PdfScreen(
-    viewModel: HomeViewModel = hiltViewModel(),
+    viewModel: HomeViewModel = koinViewModel(),
     navigator: DestinationsNavigator
 ) {
     val appPrefs = viewModel.appPre

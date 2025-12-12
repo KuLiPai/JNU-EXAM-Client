@@ -1,4 +1,4 @@
-package com.kaajjo.libresudoku.ui.more.settings.components
+package jnu.kulipai.exam.ui.screens.setting.components
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background

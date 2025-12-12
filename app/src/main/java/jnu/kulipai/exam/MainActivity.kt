@@ -2,10 +2,8 @@ package jnu.kulipai.exam
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
@@ -16,18 +14,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.rememberNavController
 import com.materialkolor.PaletteStyle
 import com.ramcosta.composedestinations.DestinationsNavHost
 import com.ramcosta.composedestinations.generated.NavGraphs
-import dagger.hilt.android.AndroidEntryPoint
-import jnu.kulipai.exam.ui.screens.home.HomeViewModel
 import jnu.kulipai.exam.ui.screens.welcome.WelcomeApp
 import jnu.kulipai.exam.ui.theme.期末无挂Theme
 import kotlinx.coroutines.DelicateCoroutinesApi
-import javax.inject.Inject
+import org.koin.androidx.compose.koinViewModel
 
 // 7.21 0:30
 // 总结一下
@@ -37,11 +32,10 @@ import javax.inject.Inject
 // 改主题配置，适配新主题和背景外的背景主题色
 // 睡觉
 
-@AndroidEntryPoint // Hilt 入口点
-class MainActivity : ComponentActivity() {
+// 12.12 14:08
+// 拜拜hilt，你好Koin
 
-    @Inject
-    lateinit var appPrefs: AppPreferences
+class MainActivity : ComponentActivity() {
 
     @OptIn(DelicateCoroutinesApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -51,7 +45,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             val navController = rememberNavController()
 
-            val mainViewModel: MainActivityViewModel = hiltViewModel()
+            val mainViewModel: MainActivityViewModel = koinViewModel()
 
             /// 哈哈，没事就是笑笑
             val dynamicColors by mainViewModel.dc.collectAsStateWithLifecycle(isSystemInDarkTheme())
@@ -86,17 +80,17 @@ class MainActivity : ComponentActivity() {
                         )
                 ) {
                     // 使用 a mutableState 来控制显示欢迎页还是主页
-                    val showWelcomeScreen = remember { mutableStateOf(appPrefs.isFirstLaunch) }
+                    val showWelcomeScreen = remember { mutableStateOf(mainViewModel.appPre.isFirstLaunch) }
 
                     if (showWelcomeScreen.value) {
                         WelcomeApp(
                             //忘了写路由了，只能简单的finish一下，一下子就没有动画了
                             onFinish = {
                                 // 当引导流程结束时，更新 SharedPreferences 并切换到主页
-                                appPrefs.isFirstLaunch = false
+                                mainViewModel.appPre.isFirstLaunch = false
                                 showWelcomeScreen.value = false
                             },
-                            appPrefs
+                            mainViewModel.appPre
                         )
                     } else {
                         DestinationsNavHost(
