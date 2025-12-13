@@ -26,6 +26,7 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -33,6 +34,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -279,6 +281,9 @@ class ThreeScreen(
         var sources: List<SourceItem?>? = null
         var selectedItem by remember { mutableStateOf<SourceItem?>(null) }
 
+        var sourceText by rememberSaveable { mutableStateOf("") }
+
+
 
         Box(
 
@@ -324,12 +329,35 @@ class ThreeScreen(
             ) {
                 if (repository.isNullOrEmpty()) {
 
-                    LoadingIndicator(
-                        modifier = Modifier
-                            .size(188.dp)
-                            .align(Alignment.Center),
-                        color = three_containerColor
-                    )
+//                    LoadingIndicator(
+//                        modifier = Modifier
+//                            .size(188.dp)
+//                            .align(Alignment.Center),
+//                        color = three_containerColor
+//                    )
+
+                    Column(
+                        modifier = Modifier.align(Alignment.Center),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            "无法获取源信息，请手动输入",
+
+                            )
+//
+
+                        OutlinedTextField(
+                            value = sourceText,
+                            onValueChange = { sourceText = it },
+                            label = { Text("源地址") },
+                            placeholder = { Text("请输入源地址") },
+                            singleLine = true,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp)
+                        )
+                    }
+
                 } else {
                     sources = Api.parseSources(repository!!)
                     FlowRow(
@@ -395,7 +423,17 @@ class ThreeScreen(
                             navigator.replaceAll(MainScreen())
                         }
                     } else {
-                        Toast.makeText(context, "请选择一个源", Toast.LENGTH_SHORT).show()
+                        if (sourceText.isEmpty()) {
+                            Toast.makeText(context, "请选择一个源", Toast.LENGTH_SHORT).show()
+
+                        } else {
+                            viewModel.getSourceJson(sourceText)
+//                            appPre.repo = selectedItem?.name.toString()
+//                            appPre.repoUrl = selectedItem?.jsonUrl.toString()
+//                            appPre.repoKey = selectedItem?.fileKey.toString()
+//                            appPre.isFirstLaunch = false
+//                            navigator.replaceAll(MainScreen())
+                        }
                     }
 
                 }
@@ -411,7 +449,11 @@ class ThreeScreen(
                             .height(24.dp),
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Welcome")
+                    if (repository.isNullOrEmpty()) {
+                        Text("加载源")
+                    } else {
+                        Text("Welcome")
+                    }
                 }
             }
         }

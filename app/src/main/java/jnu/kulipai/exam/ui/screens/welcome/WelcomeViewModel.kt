@@ -3,6 +3,7 @@ package jnu.kulipai.exam.ui.screens.welcome
 import android.app.Application
 import android.widget.Toast
 import androidx.lifecycle.ViewModel
+import io.ktor.http.Url
 import jnu.kulipai.exam.util.Api
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -22,8 +23,7 @@ class WelcomeViewModel(
     val data: StateFlow<String?> = _data
 
     // 模拟加载
-    fun getSourceJson() {
-        val url = "https://www.gubaiovo.com/jnu-exam/source_list.json"
+    fun getSourceJson(url: String="https://www.gubaiovo.com/jnu-exam/source_list.json") {
 
         api.downloadFileToInternal(
             application, url, "source.json",
