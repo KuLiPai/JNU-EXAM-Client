@@ -16,8 +16,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.setruth.themechange.components.MaskAnimActive
-import com.setruth.themechange.model.MaskAnimModel
+import jnu.kulipai.exam.data.model.MaskAnimActive
+import jnu.kulipai.exam.data.model.MaskAnimModel
 import jnu.kulipai.exam.ui.screens.home.HomeViewModel
 
 //夜间切换按钮

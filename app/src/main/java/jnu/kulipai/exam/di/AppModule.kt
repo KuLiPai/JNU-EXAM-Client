@@ -8,6 +8,7 @@ import jnu.kulipai.exam.MainActivityViewModel
 import jnu.kulipai.exam.data.repository.FileRepository
 import jnu.kulipai.exam.ui.screens.home.HomeViewModel
 import jnu.kulipai.exam.ui.screens.setting.appearance.SettingsAppearanceViewModel
+import jnu.kulipai.exam.ui.screens.welcome.WelcomeViewModel
 import jnu.kulipai.exam.ui.theme.ThemeSettingsManager
 import jnu.kulipai.exam.util.Api
 import jnu.kulipai.exam.util.FileManager
@@ -30,6 +31,7 @@ val viewModelModule = module {
     viewModel { MainActivityViewModel(get(), get()) }
     viewModel { HomeViewModel(get(), get(), get(), get()) }
     viewModel { SettingsAppearanceViewModel(get()) }
+    viewModel { WelcomeViewModel(get(),get()) }
 }
 
 // App 主模块

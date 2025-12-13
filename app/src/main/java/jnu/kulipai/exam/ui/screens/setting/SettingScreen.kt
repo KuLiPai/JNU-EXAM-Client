@@ -1,5 +1,6 @@
 package jnu.kulipai.exam.ui.screens.setting
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -57,199 +58,384 @@ import jnu.kulipai.exam.components.collapsing_topappbar.rememberTopAppBarScrollB
 import jnu.kulipai.exam.ui.screens.home.HomeViewModel
 import jnu.kulipai.exam.ui.screens.setting.appearance.SettingsAppearanceScreen
 import jnu.kulipai.exam.ui.screens.setting.components.AppThemePreviewItem
+import jnu.kulipai.exam.ui.screens.welcome.appPre
+import jnu.kulipai.exam.util.Api
 import kotlinx.coroutines.delay
 import org.koin.androidx.compose.koinViewModel
+import java.io.File
 
 
-@OptIn(ExperimentalMaterial3Api::class)
-class SettingScreen : Screen {
-    @Composable
-    override fun Content() {
-
-        val navigator = LocalNavigator.currentOrThrow
-
-        val viewModel: HomeViewModel = koinViewModel()
 
 
-        val context = LocalContext.current
-        var repoModeDialog by rememberSaveable { mutableStateOf(false) }
-        var updateModeDialog by rememberSaveable { mutableStateOf(false) }
-        var currentRepo by rememberSaveable { mutableStateOf(viewModel.appPre.repo) }
-        var currentUpdate by rememberSaveable { mutableStateOf(viewModel.appPre.update) }
-        // 一个100秒后的时间
-        var cooldown by rememberSaveable { mutableStateOf(viewModel.appPre.cooldown) }
 
-        var progress by remember { mutableStateOf((System.currentTimeMillis() - cooldown) / 100000f) }
+// 4. 将 UI 逻辑抽离出来，方便管理
+@Composable
+fun SettingsTabContent() {
+    val navigator = LocalNavigator.currentOrThrow.parent ?: LocalNavigator.currentOrThrow
+    val viewModel: HomeViewModel = koinViewModel()
+    val context = LocalContext.current
+    val appPre = viewModel.appPre
 
-        if (progress > 1f) {
-            progress = 1f
-        }
+    // 注意：在 UI 线程读文件可能会卡顿，建议以后放入 IO 线程或 ViewModel
+    // 这里为了不破坏你原有逻辑，暂时保留
+    val repoListStr = try {
+        File(context.filesDir, "source.json").readText()
+    } catch (e: Exception) {
+        "[]"
+    }
+    val repoList = Api.parseSources(repoListStr)
 
-        val animatedProgress by animateFloatAsState(
-            targetValue = progress,
-            animationSpec = tween(durationMillis = 900),
-            label = "progressAnimation"
-        )
+    var repoModeDialog by rememberSaveable { mutableStateOf(false) }
+    var updateModeDialog by rememberSaveable { mutableStateOf(false) }
+    var currentRepo by rememberSaveable { mutableStateOf(viewModel.appPre.repo) }
+    var currentUpdate by rememberSaveable { mutableStateOf(viewModel.appPre.update) }
+    var cooldown by rememberSaveable { mutableStateOf(viewModel.appPre.cooldown) }
 
-        // 每秒更新进度
-        LaunchedEffect(Unit) {
-            while (
-                true
-            ) {
-                if (progress < 1f) {
-                    progress += 0.01f
+    var progress by remember { mutableStateOf((System.currentTimeMillis() - cooldown) / 100000f) }
 
-                }
-                delay(1000)
+    if (progress > 1f) progress = 1f
 
+    val animatedProgress by animateFloatAsState(
+        targetValue = progress,
+        animationSpec = tween(durationMillis = 900),
+        label = "progressAnimation"
+    )
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            if (progress < 1f) {
+                progress += 0.01f
             }
+            delay(1000)
         }
+    }
 
-        SettingsScaffoldLazyColumn(
-            titleText = stringResource(R.string.settings_title),
-            navigator = navigator
-        ) { paddingValues ->
-            ScrollbarLazyColumn(
-                modifier = Modifier
-                    .padding(paddingValues)
-                    .fillMaxWidth()
-            ) {
-                item {
-                    PreferenceRow(
-                        title = stringResource(R.string.pref_appearance),
-                        subtitle = stringResource(R.string.perf_appearance_summary),
-                        onClick = {
-                            navigator.push(SettingsAppearanceScreen())
-                        },
-                        painter = rememberVectorPainter(Icons.Outlined.Palette)
-                    )
-                }
-
-                item {
-                    PreferenceRow(
-                        title = "更换仓库",
-                        subtitle = "当前$currentRepo",
-                        onClick = { repoModeDialog = true },
-                        painter = painterResource(
-                            when (viewModel.appPre.repo) {
-                                "github" -> R.drawable.github_142_svgrepo_com
-                                "gitee" -> R.drawable.gitee_svgrepo_com
-                                "cloudflare" -> R.drawable.cloudflare
-                                else -> R.drawable.gitee_svgrepo_com
-                            }
-                        )
-                    )
-                }
-
-                item {
-                    PreferenceRow(
-                        title = "立即更新",
-                        subtitle = if (100 - (progress * 100).toInt() == 0) "冷却完成" else "冷却剩余${100 - (progress * 100).toInt()}秒",
-                        diy = {
-                            LinearProgressIndicator(
-                                progress = { animatedProgress },
-                            )
-                        },
-                        onClick = {
-                            if (progress == 1f) {
-                                progress = 0f
-                                viewModel.appPre.cooldown = System.currentTimeMillis()
-                                viewModel.updateRepositoryData()
-                            } else {
-                                Toast.makeText(context, "冷却中", Toast.LENGTH_SHORT).show()
-                            }
-
-                        },
-                        painter = rememberVectorPainter(Icons.Default.Download)
-                    )
-                }
-
-
-                item {
-                    PreferenceRow(
-                        title = "自动更新",
-                        subtitle = if (currentUpdate == 0) "从不" else "每${currentUpdate}天更新",
-                        onClick = { updateModeDialog = true },
-                        painter = rememberVectorPainter(if (currentUpdate == 0) Icons.Default.UpdateDisabled else if (currentUpdate == 36500) Icons.Default.QuestionMark else Icons.Default.Update)
-                    )
-                }
-
-                item {
-                    PreferenceRow(
-                        title = "关于",
-//                  subtitle = "",
-                        onClick = {
-                            navigator.push(AboutScreen())
-                        },
-                        painter = rememberVectorPainter(Icons.Outlined.Info)
-                    )
-                }
+    SettingsScaffoldLazyColumn(
+        titleText = stringResource(R.string.settings_title),
+        navigator = navigator,
+        // 5. 设置为 false，不显示返回箭头
+//        showBackArrow = false
+    ) { paddingValues ->
+        ScrollbarLazyColumn(
+            modifier = Modifier
+                .padding(paddingValues)
+                .fillMaxWidth()
+        ) {
+            item {
+                PreferenceRow(
+                    title = stringResource(R.string.pref_appearance),
+                    subtitle = stringResource(R.string.perf_appearance_summary),
+                    onClick = { navigator.push(SettingsAppearanceScreen()) },
+                    painter = rememberVectorPainter(Icons.Outlined.Palette)
+                )
             }
 
-        }
+            item {
+                PreferenceRow(
+                    title = "更换仓库",
+                    subtitle = "当前$currentRepo",
+                    onClick = { repoModeDialog = true },
+                    painter = painterResource(
+                        if (viewModel.appPre.repo.contains("github", ignoreCase = true)) {
+                            R.drawable.github_142_svgrepo_com // 请确保你有这个资源
+                        } else if (viewModel.appPre.repo.contains("Cloudflare", ignoreCase = true)) {
+                            R.drawable.cloudflare // 请确保你有这个资源
+                        } else {
+                            R.drawable.cloud_24px // 请确保你有这个资源
+                        }
+                    )
+                )
+            }
 
-        if (repoModeDialog) {
-            SelectionDialog(
-                title = "选择仓库",
-                selections = listOf(
-                    "Github", "Gitee", "Cloudflare"
-                ),
-                selected = when (viewModel.appPre.repo) {
-                    "github" -> 0
-                    "gitee" -> 1
-                    "cloudflare" -> 2
-                    else -> 1
-                },
-                onSelect = { index ->
-                    currentRepo = when (index) {
-                        0 -> "github"
-                        1 -> "gitee"
-                        2 -> "cloudflare"
-                        else -> "gitee"
-                    }
+            item {
+                PreferenceRow(
+                    title = "立即更新",
+                    subtitle = if (100 - (progress * 100).toInt() <= 0) "冷却完成" else "冷却剩余${100 - (progress * 100).toInt()}秒",
+                    diy = {
+                        LinearProgressIndicator(progress = { animatedProgress })
+                    },
+                    onClick = {
+                        if (progress >= 1f) {
+                            progress = 0f
+                            viewModel.appPre.cooldown = System.currentTimeMillis()
+                            viewModel.updateRepositoryData()
+                        } else {
+                            Toast.makeText(context, "冷却中", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    painter = rememberVectorPainter(Icons.Default.Download)
+                )
+            }
+
+            item {
+                PreferenceRow(
+                    title = "自动更新",
+                    subtitle = if (currentUpdate == 0) "从不" else "每${currentUpdate}天更新",
+                    onClick = { updateModeDialog = true },
+                    painter = rememberVectorPainter(
+                        if (currentUpdate == 0) Icons.Default.UpdateDisabled
+                        else if (currentUpdate == 36500) Icons.Default.QuestionMark
+                        else Icons.Default.Update
+                    )
+                )
+            }
+
+            item {
+                PreferenceRow(
+                    title = "关于",
+                    onClick = { navigator.push(AboutScreen()) },
+                    painter = rememberVectorPainter(Icons.Outlined.Info)
+                )
+            }
+        }
+    }
+
+    if (repoModeDialog) {
+        // ... (保持你原来的 Dialog 逻辑不变) ...
+        // 为节省篇幅，这里简写，请将原来的 SelectionDialog 代码复制回来
+        SelectionDialog(
+            title = "选择仓库",
+            selections = repoList.map { it.name },
+            selected = repoList.map { it.name }.indexOf(viewModel.appPre.repo).coerceAtLeast(0),
+            onSelect = { index ->
+                if(index in repoList.indices){
+                    currentRepo = repoList[index].name
+                    appPre.repoKey = repoList[index].fileKey
+                    appPre.repoUrl = repoList[index].jsonUrl
                     viewModel.appPre.repo = currentRepo
-
-                },
-                onDismiss = { repoModeDialog = false }
-            )
-        } else if (updateModeDialog) {
-            SelectionDialog(
-                title = "设置更新间隔(天)",
-                selections = listOf(
-                    "从不", "1天", "3天", "一周", "一个月", "一个季", "一年", "一个世纪"
-                ),
-                selected = when (currentUpdate) {
-                    0 -> 0
-                    1 -> 1
-                    3 -> 2
-                    7 -> 3
-                    30 -> 4
-                    90 -> 5
-                    365 -> 6
-                    36500 -> 7
-                    else -> 0
-                },
-                onSelect = { index ->
-                    currentUpdate = when (index) {
-                        0 -> 0
-                        1 -> 1
-                        2 -> 3
-                        3 -> 7
-                        4 -> 30
-                        5 -> 90
-                        6 -> 365
-                        7 -> 36500
-                        else -> 0
-                    }
-                    viewModel.appPre.update = currentUpdate
-
-                },
-                onDismiss = { updateModeDialog = false }
-            )
-        }
-
+                }
+            },
+            onDismiss = { repoModeDialog = false }
+        )
+    } else if (updateModeDialog) {
+        // ... (保持你原来的 Dialog 逻辑不变) ...
+        SelectionDialog(
+            title = "设置更新间隔(天)",
+            selections = listOf("从不", "1天", "3天", "一周", "一个月", "一个季", "一年", "一个世纪"),
+            selected = when (currentUpdate) {
+                0 -> 0; 1 -> 1; 3 -> 2; 7 -> 3; 30 -> 4; 90 -> 5; 365 -> 6; 36500 -> 7; else -> 0
+            },
+            onSelect = { index ->
+                currentUpdate = when (index) {
+                    0 -> 0; 1 -> 1; 2 -> 3; 3 -> 7; 4 -> 30; 5 -> 90; 6 -> 365; 7 -> 36500; else -> 0
+                }
+                viewModel.appPre.update = currentUpdate
+            },
+            onDismiss = { updateModeDialog = false }
+        )
     }
 }
+
+//
+//
+//@OptIn(ExperimentalMaterial3Api::class)
+//class SettingScreen : Screen {
+//    @Composable
+//    override fun Content() {
+//
+//        val navigator = LocalNavigator.currentOrThrow
+//
+//        val viewModel: HomeViewModel = koinViewModel()
+//
+//
+//        val context = LocalContext.current
+//
+//        val appPre = viewModel.appPre
+//
+//
+//        val repoListStr = File(context.filesDir,"source.json").readText()
+//        val repoList = Api.parseSources(repoListStr)
+//
+//
+//        var repoModeDialog by rememberSaveable { mutableStateOf(false) }
+//        var updateModeDialog by rememberSaveable { mutableStateOf(false) }
+//        var currentRepo by rememberSaveable { mutableStateOf(viewModel.appPre.repo) }
+//        var currentUpdate by rememberSaveable { mutableStateOf(viewModel.appPre.update) }
+//        // 一个100秒后的时间
+//        var cooldown by rememberSaveable { mutableStateOf(viewModel.appPre.cooldown) }
+//
+//        var progress by remember { mutableStateOf((System.currentTimeMillis() - cooldown) / 100000f) }
+//
+//        if (progress > 1f) {
+//            progress = 1f
+//        }
+//
+//        val animatedProgress by animateFloatAsState(
+//            targetValue = progress,
+//            animationSpec = tween(durationMillis = 900),
+//            label = "progressAnimation"
+//        )
+//
+//        // 每秒更新进度
+//        LaunchedEffect(Unit) {
+//            while (
+//                true
+//            ) {
+//                if (progress < 1f) {
+//                    progress += 0.01f
+//
+//                }
+//                delay(1000)
+//
+//            }
+//        }
+//
+//        SettingsScaffoldLazyColumn(
+//            titleText = stringResource(R.string.settings_title),
+//            navigator = navigator
+//        ) { paddingValues ->
+//            ScrollbarLazyColumn(
+//                modifier = Modifier
+//                    .padding(paddingValues)
+//                    .fillMaxWidth()
+//            ) {
+//                item {
+//                    PreferenceRow(
+//                        title = stringResource(R.string.pref_appearance),
+//                        subtitle = stringResource(R.string.perf_appearance_summary),
+//                        onClick = {
+//                            navigator.push(SettingsAppearanceScreen())
+//                        },
+//                        painter = rememberVectorPainter(Icons.Outlined.Palette)
+//                    )
+//                }
+//
+//                item {
+//                    PreferenceRow(
+//                        title = "更换仓库",
+//                        subtitle = "当前$currentRepo",
+//                        onClick = { repoModeDialog = true },
+//                        painter = painterResource(
+//                            if (viewModel.appPre.repo.contains("github", ignoreCase = true)) {
+//                                R.drawable.github_142_svgrepo_com
+//                            } else if (viewModel.appPre.repo.contains("Cloudflare", ignoreCase = true)) {
+//                                R.drawable.cloudflare
+//                            } else {
+//                                R.drawable.cloud_24px
+//                            }
+////                            when (viewModel.appPre.repo) {
+////                                "Github" ->
+////                                "gitee" -> R.drawable.gitee_svgrepo_com
+////                                "Cloudflare" -> R.drawable.cloudflare
+////                                else -> R.drawable.gitee_svgrepo_com
+////                            }
+//                        )
+//                    )
+//                }
+//
+//                item {
+//                    PreferenceRow(
+//                        title = "立即更新",
+//                        subtitle = if (100 - (progress * 100).toInt() == 0) "冷却完成" else "冷却剩余${100 - (progress * 100).toInt()}秒",
+//                        diy = {
+//                            LinearProgressIndicator(
+//                                progress = { animatedProgress },
+//                            )
+//                        },
+//                        onClick = {
+//                            if (progress == 1f) {
+//                                progress = 0f
+//                                viewModel.appPre.cooldown = System.currentTimeMillis()
+//                                viewModel.updateRepositoryData()
+//                            } else {
+//                                Toast.makeText(context, "冷却中", Toast.LENGTH_SHORT).show()
+//                            }
+//
+//                        },
+//                        painter = rememberVectorPainter(Icons.Default.Download)
+//                    )
+//                }
+//
+//
+//                item {
+//                    PreferenceRow(
+//                        title = "自动更新",
+//                        subtitle = if (currentUpdate == 0) "从不" else "每${currentUpdate}天更新",
+//                        onClick = { updateModeDialog = true },
+//                        painter = rememberVectorPainter(if (currentUpdate == 0) Icons.Default.UpdateDisabled else if (currentUpdate == 36500) Icons.Default.QuestionMark else Icons.Default.Update)
+//                    )
+//                }
+//
+//                item {
+//                    PreferenceRow(
+//                        title = "关于",
+////                  subtitle = "",
+//                        onClick = {
+//                            navigator.push(AboutScreen())
+//                        },
+//                        painter = rememberVectorPainter(Icons.Outlined.Info)
+//                    )
+//                }
+//            }
+//
+//        }
+//
+//
+//
+//        if (repoModeDialog) {
+//            SelectionDialog(
+//                title = "选择仓库",
+//                selections = repoList.map { it.name },
+//                selected = repoList.map { it.name }.indexOf(viewModel.appPre.repo) ,
+////                    when (viewModel.appPre.repo) {
+////                    "github" -> 0
+////                    "gitee" -> 1
+////                    "cloudflare" -> 2
+////                    else -> 1
+////                },
+//                onSelect = { index ->
+//                    currentRepo = repoList.map { it.name }[index]
+//                    appPre.repoKey = repoList[index].fileKey
+//                    appPre.repoUrl = repoList[index].jsonUrl
+////                        when (index) {
+////                        0 -> "github"
+////                        1 -> "gitee"
+////                        2 -> "cloudflare"
+////                        else -> "gitee"
+////                    }
+//                    viewModel.appPre.repo = currentRepo
+//
+//                },
+//                onDismiss = { repoModeDialog = false }
+//            )
+//        } else if (updateModeDialog) {
+//            SelectionDialog(
+//                title = "设置更新间隔(天)",
+//                selections = listOf(
+//                    "从不", "1天", "3天", "一周", "一个月", "一个季", "一年", "一个世纪"
+//                ),
+//                selected = when (currentUpdate) {
+//                    0 -> 0
+//                    1 -> 1
+//                    3 -> 2
+//                    7 -> 3
+//                    30 -> 4
+//                    90 -> 5
+//                    365 -> 6
+//                    36500 -> 7
+//                    else -> 0
+//                },
+//                onSelect = { index ->
+//                    currentUpdate = when (index) {
+//                        0 -> 0
+//                        1 -> 1
+//                        2 -> 3
+//                        3 -> 7
+//                        4 -> 30
+//                        5 -> 90
+//                        6 -> 365
+//                        7 -> 36500
+//                        else -> 0
+//                    }
+//                    viewModel.appPre.update = currentUpdate
+//
+//                },
+//                onDismiss = { updateModeDialog = false }
+//            )
+//        }
+//
+//    }
+//}
 
 
 @Composable
@@ -289,6 +475,8 @@ fun AppThemeItem(
 }
 
 
+
+
 @Composable
 fun SettingsScaffoldLazyColumn(
     navigator: Navigator,
@@ -309,14 +497,14 @@ fun SettingsScaffoldLazyColumn(
         topBar = {
             CollapsingTopAppBar(
                 collapsingTitle = CollapsingTitle.medium(titleText = titleText),
-                navigationIcon = {
-                    IconButton(onClick = { navigator.pop() }) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = null
-                        )
-                    }
-                },
+//                navigationIcon = {
+//                    IconButton(onClick = { navigator.pop() }) {
+//                        Icon(
+//                            Icons.AutoMirrored.Filled.ArrowBack,
+//                            contentDescription = null
+//                        )
+//                    }
+//                },
                 scrollBehavior = scrollBehavior
             )
         }

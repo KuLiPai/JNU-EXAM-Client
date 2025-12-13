@@ -21,8 +21,14 @@ class AppPreferences (
         get() = prefs.getBoolean(NIGHT, false)
         set(value) = prefs.edit { putBoolean(NIGHT, value) }
     var repo: String
-        get() = prefs.getString(REPO, "gitee").toString()
+        get() = prefs.getString(REPO, "Github").toString()
         set(value) = prefs.edit { putString(REPO, value) }
+    var repoUrl: String
+        get() = prefs.getString(REPO_URL, "").toString()
+        set(value) = prefs.edit { putString(REPO_URL, value) }
+    var repoKey: String
+        get() = prefs.getString(REPO_KEY, "").toString()
+        set(value) = prefs.edit { putString(REPO_KEY, value) }
     var day: Long
         get() = prefs.getLong(DAY, -1)
         set(value) = prefs.edit { putLong(DAY, value) }
@@ -45,6 +51,8 @@ class AppPreferences (
         private const val KEY_FIRST_LAUNCH = "first_launch"
         private const val NIGHT = "night"
         private const val REPO = "repo"
+        private const val REPO_URL = "repoUrl"
+        private const val REPO_KEY = "repoKey"
         private const val DAY = "day"
         private const val UPDATE = "update"
         private const val COOLDOWN = "cooldown"

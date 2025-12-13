@@ -1,5 +1,8 @@
 package jnu.kulipai.exam.components
 
+import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
@@ -24,14 +27,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.ElevatedButton
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
-import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.Indicator
-import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -48,6 +52,7 @@ import cafe.adriel.voyager.navigator.Navigator
 import jnu.kulipai.exam.R
 import jnu.kulipai.exam.data.model.DownLoadState
 import jnu.kulipai.exam.data.model.FileItem
+
 import jnu.kulipai.exam.ui.screens.home.HomeViewModel
 import jnu.kulipai.exam.ui.screens.pdf.PdfScreen
 import jnu.kulipai.exam.util.Api
@@ -56,6 +61,7 @@ import jnu.kulipai.exam.util.FileManager
 import java.io.File
 
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun FileCard(
     item: FileItem,
@@ -63,10 +69,13 @@ fun FileCard(
     navController: Navigator
 ) { // 接收 FileItem 和 HomeViewModel
 
+
     val context = LocalContext.current
+
+
     var downloadState by remember(item.path) { // key 设为 item.path，确保文件路径改变时重置状态
         mutableStateOf(
-            if (FileManager.exists(context, item.path)) { // 使用 LocalContext.current
+            if (FileManager.exists(context, item.path, true)) { // 使用 LocalContext.current
                 DownLoadState.Downloaded
             } else {
                 DownLoadState.None
@@ -154,14 +163,14 @@ fun FileCard(
                         Spacer(modifier = Modifier.height(8.dp))
                         Text("大小: ${Api.formatFileSize(item.size)}")
                         Spacer(modifier = Modifier.height(8.dp))
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text("直链: ")
-                            CopyableTextWithShape("Github", item.github_raw_url)
-                            Spacer(modifier = Modifier.width(8.dp))
-                            CopyableTextWithShape("Gitee", item.gitee_raw_url)
-                            Spacer(modifier = Modifier.width(8.dp))
-                            CopyableTextWithShape("Cloudflare", item.cf_url)
-                        }
+//                        Row(verticalAlignment = Alignment.CenterVertically) {
+//                            Text("直链: ")
+////                            CopyableTextWithShape("Github", item.github_raw_url)
+////                            Spacer(modifier = Modifier.width(8.dp))
+////                            CopyableTextWithShape("Gitee", item.gitee_raw_url)
+////                            Spacer(modifier = Modifier.width(8.dp))
+////                            CopyableTextWithShape("Cloudflare", item.cf_url)
+//                        }
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -173,7 +182,9 @@ fun FileCard(
                             if (downloadState == DownLoadState.Downloaded) {
                                 ElevatedButton(
                                     onClick = {
-                                        homeViewModel.exportFile(item.path)
+                                        homeViewModel.prepareExport(item.path)
+
+
                                     },
                                     contentPadding = PaddingValues(
                                         start = 16.dp,
@@ -191,7 +202,8 @@ fun FileCard(
                             if (item.name.substringAfterLast(".") == "pdf" && downloadState == DownLoadState.Downloaded) {
                                 ElevatedButton(
                                     onClick = {
-                                        Cache.currentFile = File(context.filesDir, item.path)
+                                        Cache.currentFile =
+                                            File(context.getExternalFilesDir(""), item.path)
                                         Cache.currentName = item.name
                                         navController.push(PdfScreen())
                                     },
@@ -243,20 +255,12 @@ fun FileCard(
                                     }
 
                                     DownLoadState.DownLoading -> {
-                                        Indicator(
+                                        LoadingIndicator(
                                             color = MaterialTheme.colorScheme.onPrimary,
-                                            isRefreshing = true,
                                             modifier = Modifier
                                                 .width(24.dp)
                                                 .height(24.dp),
-                                            state = rememberPullToRefreshState(),
                                         )
-//                                        LoadingIndicator(
-//                                            color = MaterialTheme.colorScheme.onPrimary,
-//                                            modifier = Modifier
-//                                                .width(24.dp)
-//                                                .height(24.dp),
-//                                        )
                                         Spacer(modifier = Modifier.width(4.dp))
                                         Text("下载中")
                                     }

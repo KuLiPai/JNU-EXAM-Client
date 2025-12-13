@@ -1,6 +1,5 @@
 package jnu.kulipai.exam.ui.screens.pdf
 
-import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Arrangement
@@ -27,25 +26,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
-import com.setruth.themechange.components.MaskAnimActive
-import com.setruth.themechange.components.MaskBox
+import jnu.kulipai.exam.data.model.MaskAnimActive
 import dev.zt64.compose.pdf.PdfState
 import dev.zt64.compose.pdf.component.PdfPage
-import dev.zt64.compose.pdf.component.PdfVerticalPager
 import dev.zt64.compose.pdf.rememberLocalPdfState
 import jnu.kulipai.exam.components.ThemeToggleButton
 import jnu.kulipai.exam.ui.screens.home.HomeViewModel
+import jnu.kulipai.exam.ui.util.ScreenshotThemeTransition
 import jnu.kulipai.exam.util.Cache
 import org.koin.androidx.compose.koinViewModel
 import java.io.File
+import kotlin.math.max
 import kotlin.math.roundToInt
 
 
@@ -54,29 +50,20 @@ class PdfScreen : Screen {
     @Composable
     override fun Content() {
 
+
         val viewModel: HomeViewModel = koinViewModel()
         LocalNavigator.currentOrThrow
         val appPrefs = viewModel.appPre
         val darkTheme by viewModel.darkTheme.collectAsStateWithLifecycle(0)
         var isAnimating by remember { mutableStateOf(false) }
-        var pendingThemeChange by remember { mutableStateOf<Boolean?>(null) }
 
 
 
-        MaskBox(
-            animTime = 1500L,
-            maskComplete = {
-                pendingThemeChange?.let { newTheme ->
 
-                    viewModel.updateDarkTheme(if (newTheme) 2 else 1)
-                    appPrefs.isNight = newTheme
-                    pendingThemeChange = null
-                }
-            },
-            animFinish = {
-                isAnimating = false
-            }
-        ) { maskAnimActiveEvent ->
+        ScreenshotThemeTransition(
+            isDarkTheme = (darkTheme == 2),
+            modifier = Modifier
+        ) { startAnim ->
             PdfScaffold(
                 isDarkTheme = when (darkTheme) {
                     1 -> false
@@ -86,18 +73,61 @@ class PdfScreen : Screen {
                 isAnimating = isAnimating,
                 homeViewModel = viewModel,
                 onThemeToggle = { animModel, x, y ->
-                    if (!isAnimating) {
-                        isAnimating = true
-                        pendingThemeChange = !when (darkTheme) {
-                            1 -> false
-                            2 -> true
-                            else -> false
+
+                    val isExpand = (darkTheme == 2)
+                    startAnim(Offset(x, y), isExpand) {
+                        // 这个代码块会在截图完成后执行
+                        val newTheme = when (darkTheme) {
+                            1 -> true
+                            2 -> false
+                            else -> true
                         }
-                        maskAnimActiveEvent(animModel, x, y)
+                        viewModel.updateDarkTheme(if (newTheme) 2 else 1)
+                        appPrefs.isNight = newTheme
                     }
+
+
+
                 },
             )
         }
+
+
+//        MaskBox(
+//            animTime = 1500L,
+//            maskComplete = {
+//                pendingThemeChange?.let { newTheme ->
+//
+//                    viewModel.updateDarkTheme(if (newTheme) 2 else 1)
+//                    appPrefs.isNight = newTheme
+//                    pendingThemeChange = null
+//                }
+//            },
+//            animFinish = {
+//                isAnimating = false
+//            }
+//        ) { maskAnimActiveEvent ->
+//            PdfScaffold(
+//                isDarkTheme = when (darkTheme) {
+//                    1 -> false
+//                    2 -> true
+//                    else -> false
+//                },
+//                isAnimating = isAnimating,
+//                homeViewModel = viewModel,
+//                onThemeToggle = { animModel, x, y ->
+//                    if (!isAnimating) {
+//                        isAnimating = true
+//                        pendingThemeChange = !when (darkTheme) {
+//                            1 -> false
+//                            2 -> true
+//                            else -> false
+//                        }
+//                        maskAnimActiveEvent(animModel, x, y)
+//                    }
+//                },
+//            )
+//        }
 
 
     }
@@ -170,6 +200,9 @@ fun PdfScaffold(
     ) { innerPadding ->
         val currentFile = Cache.currentFile
 
+
+
+
         Column(
             modifier = Modifier
                 .padding(innerPadding)
@@ -181,17 +214,14 @@ fun PdfScaffold(
 }
 
 
-
-
-
 @Composable
 fun CustomPdfViewer(
     file: File
 ) {
 
-
     // 创建 PDF 状态
     val pdfState = rememberLocalPdfState(file)
+
 
     // 当前显示页码
     var currentPage by remember { mutableStateOf(0) }
@@ -220,7 +250,7 @@ fun CustomPdfViewer(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(24.dp)
         ) {
             Text("Page: ${currentPage + 1} / ${maxPage + 1}")
 
@@ -230,7 +260,7 @@ fun CustomPdfViewer(
                     currentPage = newValue.roundToInt()
                 },
                 valueRange = 0f..maxPage.toFloat(),
-                steps = maxPage - 1 // 让滑块只停在整数
+                steps = max(maxPage - 1, 0) // 让滑块只停在整数
             )
         }
     }

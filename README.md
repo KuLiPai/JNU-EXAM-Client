@@ -30,7 +30,7 @@
 本应用得益于开源社区的强大力量。我们衷心感谢以下项目：
 
 * **[LibChecker](https://github.com/LibChecker/LibChecker)**：其精美的加载动画为我们带来了灵感。
-* **[MaskAnim](https://github.com/setruth/MaskAnim)** by @setruth：用于实现优雅的遮罩动画。
+* **[AndroidLiquidGlass](https://github.com/Kyant0/AndroidLiquidGlass)**:Jetpack Compose Liquid Glass effect.
 
 -----
 

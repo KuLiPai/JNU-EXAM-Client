@@ -100,6 +100,7 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     // m3 i like
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.compose.material3)
     // 无语，和上面的冲突，还要compileOnly不能implementation，解决了一下午，早上顿悟才解决，真是无语了
     //删了彻底解决问题
 //    compileOnly(libs.material3.jvmstubs)

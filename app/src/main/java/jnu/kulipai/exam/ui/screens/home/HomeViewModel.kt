@@ -6,6 +6,7 @@ import android.net.Uri
 import android.webkit.MimeTypeMap
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -49,12 +50,11 @@ class HomeViewModel(
             themeSettingsManager.setDarkTheme(value)
         }
 
+
     private var exportLauncher: ActivityResultLauncher<String>? = null
     fun setExportLauncher(arl: ActivityResultLauncher<String>) {
         exportLauncher = arl
     }
-
-    lateinit var exportPath: String
 
     private var _isSearch = MutableStateFlow(false)
     var isSearch = _isSearch.asStateFlow()
@@ -159,16 +159,12 @@ class HomeViewModel(
         viewModelScope.launch {
             downloadCallback(DownLoadState.DownLoading)
             try {
-                val url = when (appPreferences.repo) {
-                    "gitee" -> fileItem.gitee_raw_url
-                    "github" -> fileItem.github_raw_url
-                    "cloudflare" -> fileItem.cf_url
-                    else -> fileItem.gitee_raw_url
-                }
+                val url = fileItem.url
                 Api.downloadFileToInternal(
                     application, // 使用 application context
                     url,
                     fileItem.path,
+                    true,
                     { downloadCallback(DownLoadState.Downloaded) },
                     { downloadCallback(DownLoadState.Err) }
                 )
@@ -181,7 +177,7 @@ class HomeViewModel(
 
 
     fun openFileWithOtherApp(relativePath: String) {
-        val file = File(application.filesDir, relativePath)
+        val file = File(application.getExternalFilesDir(""), relativePath)
         if (!file.exists()) {
             throw IllegalArgumentException("File does not exist: $relativePath")
         }
@@ -227,11 +223,35 @@ class HomeViewModel(
             ).show()
         }
     }
+//
 
-    fun exportFileToUri(relativePath: String, targetUri: Uri) {
-        val file = File(application.filesDir, relativePath)
+
+
+
+    var exportPath: String? = null
+        private set
+    var exportMime: String? = null
+        private set
+
+
+    // 在 HomeViewModel 中
+    fun prepareExport(path: String) {
+        exportPath = path
+        val file = File(path)
+
+        // 1. 设置 MIME (这是为了解决后缀乱加的问题，结合上一条回答)
+        exportMime = guessMimeType(file.name)
+
+        // 2. 【关键修复】 这里必须要调用 launch，弹窗才会出来！
+        // 传入文件名作为建议名称
+        exportLauncher?.launch(file.name)
+    }
+
+    fun exportFileToUri(targetUri: Uri) {
+        val path = exportPath ?: return
+        val file = File(application.getExternalFilesDir(""), path)
         if (!file.exists()) {
-            Toast.makeText(application, "源文件不存在: $relativePath", Toast.LENGTH_SHORT).show()
+            Toast.makeText(application, "源文件不存在: $path", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -259,9 +279,43 @@ class HomeViewModel(
         }
     }
 
-    fun exportFile(path: String) {
-        exportPath = path
-        exportLauncher?.launch(path)
+    // 在 HomeViewModel 中
+    private fun guessMimeType(fileName: String): String {
+        val ext = fileName.substringAfterLast('.', "").lowercase()
+        return when (ext) {
+            // 图片、视频、PDF 等为了方便用户在保存时能看到预览图，可以保留具体类型
+            "pdf" -> "application/pdf"
+            "jpg", "jpeg" -> "image/jpeg"
+            "png" -> "image/png"
+            "webp" -> "image/webp"
+            "mp4" -> "video/mp4"
+            "mp3" -> "audio/mpeg"
+            "apk" -> "application/vnd.android.package-archive"
+
+            // 【关键修改】
+            // 对于 md, json, lua, log, xml, gradle 等容易被系统自动加 .txt 的文件
+            // 全部统一返回 application/octet-stream
+            // 这样系统就会完全尊重你传入的 fileName，不会自动加后缀
+            "md", "json", "xml", "lua", "log", "gradle", "kts", "cpp", "c", "h", "java", "kt" -> "application/octet-stream"
+
+            // 甚至对于 txt，如果你也不想让系统干预，也可以设为 octet-stream
+            // 但保留 text/plain 给 .txt 通常是没问题的
+            "txt" -> "text/plain"
+
+            // 压缩包通常没问题，保持原样即可
+            "zip" -> "application/zip"
+            "rar" -> "application/vnd.rar"
+            "7z" -> "application/x-7z-compressed"
+
+            // Office 文档
+            "doc" -> "application/msword"
+            "docx" -> "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            "xls" -> "application/vnd.ms-excel"
+            "xlsx" -> "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+            // 默认兜底
+            else -> "application/octet-stream"
+        }
     }
 
 

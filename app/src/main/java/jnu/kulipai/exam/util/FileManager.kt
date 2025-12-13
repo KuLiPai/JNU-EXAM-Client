@@ -1,6 +1,7 @@
 package jnu.kulipai.exam.util
 
 import android.content.Context
+import jnu.kulipai.exam.AppPreferences
 import jnu.kulipai.exam.data.model.DirNode
 import jnu.kulipai.exam.data.model.FileItem
 import org.json.JSONObject
@@ -25,12 +26,13 @@ object FileManager {
 
 
     // ✅ 判断内部文件是否存在
-    fun exists(context: Context, filename: String): Boolean {
-        val file = File(context.filesDir, filename)
+    fun exists(context: Context, filename: String,isExternal: Boolean = false): Boolean {
+        val parent = if (isExternal) context.getExternalFilesDir("") else context.filesDir
+        val file = File(parent, filename)
         return file.exists()
     }
 
-    fun buildDirectoryTree(json: String): DirNode {
+    fun buildDirectoryTree(json: String,appPreferences: AppPreferences): DirNode {
         val root = DirNode(name = "/", path = "/")
         val jsonObject = JSONObject(json)
         val dirsArray = jsonObject.getJSONArray("dirs")
@@ -59,9 +61,10 @@ object FileManager {
                         name = fileObj.getString("name"),
                         path = fileObj.getString("path"),
                         size = fileObj.getLong("size"),
-                        github_raw_url = fileObj.getString("github_raw_url"),
-                        gitee_raw_url = fileObj.getString("gitee_raw_url"),
-                        cf_url = fileObj.getString("cf_url")
+                        url = fileObj.getString(appPreferences.repoKey)
+//                        github_raw_url = fileObj.getString("github_raw_url"),
+//                        gitee_raw_url = fileObj.getString("gitee_raw_url"),
+//                        cf_url = fileObj.getString("cf_url")
                     )
                 )
             }
