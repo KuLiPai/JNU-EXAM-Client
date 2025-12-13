@@ -22,8 +22,8 @@ android {
         // 正好有个Android12L导致api和版本号对上了12-11，12l-12，13-33
         // 12L是首个为适配安卓平板专门推出的，我手机也刷过，非常棒的底栏和win类似app切换
         // 12L是有无法卸载app漏洞出现的版本，即3700个Activity的应用无法卸载
-        versionCode = 5
-        versionName = "1.3-Beta"
+        versionCode = 6
+        versionName = "1.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
