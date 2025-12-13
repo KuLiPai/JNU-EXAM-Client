@@ -133,7 +133,7 @@ class HomeViewModel(
         }
     }
 
-    fun updateRepositoryData() {
+    fun updateRepositoryData(callBack:()-> Unit ={}) {
         viewModelScope.launch {
             _loadingState.value = LoadingState.Loading
             try {
@@ -149,6 +149,7 @@ class HomeViewModel(
             } catch (e: Exception) {
                 Toast.makeText(application, "更新失败: ${e.message}", Toast.LENGTH_SHORT).show()
                 _loadingState.value = LoadingState.Loaded // 即使失败也要回到 Loaded 状态
+                callBack()
             }
         }
     }
