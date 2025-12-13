@@ -80,18 +80,23 @@ object Api {
     // 解析源
     fun parseSources(jsonString: String): List<SourceItem> {
         val result = mutableListOf<SourceItem>()
-        val jsonObject = JSONObject(jsonString)
+        try {
+            val jsonObject = JSONObject(jsonString)
+            jsonObject.keys().forEach { key ->
 
-        jsonObject.keys().forEach { key ->
+                val itemObj = jsonObject.getJSONObject(key)
+                val jsonUrl = itemObj.getString("json_url")
+                val fileKey = itemObj.getString("file_key")
+                result.add(SourceItem(name = key, jsonUrl = jsonUrl, fileKey = fileKey))
 
-            val itemObj = jsonObject.getJSONObject(key)
-            val jsonUrl = itemObj.getString("json_url")
-            val fileKey = itemObj.getString("file_key")
-            result.add(SourceItem(name = key, jsonUrl = jsonUrl, fileKey = fileKey))
+            }
+            return result
 
+        }catch (e: Exception) {
+            return result
         }
 
-        return result
+
     }
 
     fun downloadFileToInternal(
