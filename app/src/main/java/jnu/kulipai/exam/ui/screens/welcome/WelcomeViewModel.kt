@@ -4,6 +4,7 @@ import android.app.Application
 import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import io.ktor.http.Url
+import jnu.kulipai.exam.AppPreferences
 import jnu.kulipai.exam.util.Api
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,7 +17,8 @@ data class SourceItem(
 
 class WelcomeViewModel(
     val api: Api,
-    val application: Application // 最好别context，内存问题，用application
+    val application: Application, // 最好别context，内存问题，用application
+    val appPre: AppPreferences
 ) : ViewModel() {
     // 数据状态
     private val _data = MutableStateFlow<String?>(null) // null 表示未加载

@@ -29,6 +29,9 @@ class AppPreferences (
     var repoKey: String
         get() = prefs.getString(REPO_KEY, "").toString()
         set(value) = prefs.edit { putString(REPO_KEY, value) }
+    var sourceUrl: String
+        get() = prefs.getString(SOURCE_URL, "https://www.gubaiovo.com/jnu-exam/source_list.json").toString()
+        set(value) = prefs.edit { putString(SOURCE_URL, value) }
     var day: Long
         get() = prefs.getLong(DAY, -1)
         set(value) = prefs.edit { putLong(DAY, value) }
@@ -53,6 +56,7 @@ class AppPreferences (
         private const val REPO = "repo"
         private const val REPO_URL = "repoUrl"
         private const val REPO_KEY = "repoKey"
+        private const val SOURCE_URL = "sourceUrl"
         private const val DAY = "day"
         private const val UPDATE = "update"
         private const val COOLDOWN = "cooldown"

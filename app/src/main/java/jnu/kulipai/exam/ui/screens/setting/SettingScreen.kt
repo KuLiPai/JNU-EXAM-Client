@@ -1,6 +1,5 @@
 package jnu.kulipai.exam.ui.screens.setting
 
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -11,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.QuestionMark
 import androidx.compose.material.icons.filled.Update
@@ -19,9 +17,6 @@ import androidx.compose.material.icons.filled.UpdateDisabled
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material3.ColorScheme
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -33,6 +28,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -44,7 +40,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.currentOrThrow
@@ -58,14 +53,11 @@ import jnu.kulipai.exam.components.collapsing_topappbar.rememberTopAppBarScrollB
 import jnu.kulipai.exam.ui.screens.home.HomeViewModel
 import jnu.kulipai.exam.ui.screens.setting.appearance.SettingsAppearanceScreen
 import jnu.kulipai.exam.ui.screens.setting.components.AppThemePreviewItem
-import jnu.kulipai.exam.ui.screens.welcome.appPre
 import jnu.kulipai.exam.util.Api
 import kotlinx.coroutines.delay
 import org.koin.androidx.compose.koinViewModel
 import java.io.File
-
-
-
+import java.net.URL
 
 
 // 4. 将 UI 逻辑抽离出来，方便管理
@@ -87,7 +79,9 @@ fun SettingsTabContent() {
 
     var repoModeDialog by rememberSaveable { mutableStateOf(false) }
     var updateModeDialog by rememberSaveable { mutableStateOf(false) }
+    var sourceModeDialog by rememberSaveable { mutableStateOf(false) }
     var currentRepo by rememberSaveable { mutableStateOf(viewModel.appPre.repo) }
+    var currentSource by rememberSaveable { mutableStateOf(viewModel.appPre.sourceUrl) }
     var currentUpdate by rememberSaveable { mutableStateOf(viewModel.appPre.update) }
     var cooldown by rememberSaveable { mutableStateOf(viewModel.appPre.cooldown) }
 
@@ -110,9 +104,13 @@ fun SettingsTabContent() {
         }
     }
 
+    rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
+
     SettingsScaffoldLazyColumn(
         titleText = stringResource(R.string.settings_title),
         navigator = navigator,
+        snackbarHostState = snackbarHostState,
         // 5. 设置为 false，不显示返回箭头
 //        showBackArrow = false
     ) { paddingValues ->
@@ -132,13 +130,34 @@ fun SettingsTabContent() {
 
             item {
                 PreferenceRow(
+                    title = "更换源",
+                    subtitle = "当前${
+                        try {
+                            URL(currentSource).host
+                        } catch (e: Exception) {
+                            currentSource
+                        }
+                    }",
+                    onClick = { sourceModeDialog = true },
+                    painter = painterResource(
+                        R.drawable.database_24px
+                    )
+                )
+            }
+
+            item {
+                PreferenceRow(
                     title = "更换仓库",
                     subtitle = "当前$currentRepo",
                     onClick = { repoModeDialog = true },
                     painter = painterResource(
                         if (viewModel.appPre.repo.contains("github", ignoreCase = true)) {
                             R.drawable.github_142_svgrepo_com // 请确保你有这个资源
-                        } else if (viewModel.appPre.repo.contains("Cloudflare", ignoreCase = true)) {
+                        } else if (viewModel.appPre.repo.contains(
+                                "Cloudflare",
+                                ignoreCase = true
+                            )
+                        ) {
                             R.drawable.cloudflare // 请确保你有这个资源
                         } else {
                             R.drawable.cloud_24px // 请确保你有这个资源
@@ -146,6 +165,7 @@ fun SettingsTabContent() {
                     )
                 )
             }
+
 
             item {
                 PreferenceRow(
@@ -201,7 +221,7 @@ fun SettingsTabContent() {
             selections = repoList.map { it.name },
             selected = repoList.map { it.name }.indexOf(viewModel.appPre.repo).coerceAtLeast(0),
             onSelect = { index ->
-                if(index in repoList.indices){
+                if (index in repoList.indices) {
                     currentRepo = repoList[index].name
                     appPre.repoKey = repoList[index].fileKey
                     appPre.repoUrl = repoList[index].jsonUrl
@@ -214,7 +234,16 @@ fun SettingsTabContent() {
         // ... (保持你原来的 Dialog 逻辑不变) ...
         SelectionDialog(
             title = "设置更新间隔(天)",
-            selections = listOf("从不", "1天", "3天", "一周", "一个月", "一个季", "一年", "一个世纪"),
+            selections = listOf(
+                "从不",
+                "1天",
+                "3天",
+                "一周",
+                "一个月",
+                "一个季",
+                "一年",
+                "一个世纪"
+            ),
             selected = when (currentUpdate) {
                 0 -> 0; 1 -> 1; 3 -> 2; 7 -> 3; 30 -> 4; 90 -> 5; 365 -> 6; 36500 -> 7; else -> 0
             },
@@ -225,6 +254,32 @@ fun SettingsTabContent() {
                 viewModel.appPre.update = currentUpdate
             },
             onDismiss = { updateModeDialog = false }
+        )
+    } else if (sourceModeDialog) {
+        InputDialog(
+            title = "输入源URL",
+            hint = "源列表配置URL",
+            onConfirm = {
+                appPre.sourceUrl = it
+                currentSource = it
+//                Toast.makeText(context, "更换成功", Toast.LENGTH_SHORT).show()
+                Api.getSourceJson(context, it, {
+                    Toast.makeText(context, "更换成功", Toast.LENGTH_SHORT).show()
+
+                })
+            },
+            onNeutral = {
+                // 把这里写一个常量
+                appPre.sourceUrl = "https://www.gubaiovo.com/jnu-exam/source_list.json"
+                currentSource = it
+                Api.getSourceJson(context, "https://www.gubaiovo.com/jnu-exam/source_list.json", {
+                    Toast.makeText(context, "已恢复默认", Toast.LENGTH_SHORT).show()
+                })
+
+//                Toast.makeText(context, "已恢复默认", Toast.LENGTH_SHORT).show()
+
+            },
+            onDismiss = { sourceModeDialog = false }
         )
     }
 }
@@ -265,8 +320,6 @@ fun AppThemeItem(
         )
     }
 }
-
-
 
 
 @Composable

@@ -1,6 +1,5 @@
 package jnu.kulipai.exam.ui.screens.home
 
-import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
@@ -39,7 +38,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -52,7 +50,6 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import cafe.adriel.voyager.navigator.tab.TabNavigator
 import com.kyant.backdrop.backdrops.layerBackdrop
 import com.kyant.backdrop.backdrops.rememberLayerBackdrop
-import jnu.kulipai.exam.R
 import jnu.kulipai.exam.components.HomeTopBar
 import jnu.kulipai.exam.components.LiquidBottomTab
 import jnu.kulipai.exam.components.LiquidBottomTabs
@@ -75,7 +72,7 @@ class MainScreen : Screen {
 
         // 每次打开加载一次源
         LaunchedEffect(Unit) {
-            getSourceJson(context)
+            getSourceJson(context, viewModel.appPre.sourceUrl)
         }
 
 
@@ -267,11 +264,15 @@ fun MainScaffold(
                         if (toIndex > fromIndex) {
                             // 向右切换
                             (slideInHorizontally(slideSpec) { it } + fadeIn(fadeSpec))
-                                .togetherWith(slideOutHorizontally(slideSpec) { -it } + fadeOut(fadeSpec))
+                                .togetherWith(slideOutHorizontally(slideSpec) { -it } + fadeOut(
+                                    fadeSpec
+                                ))
                         } else {
                             // 向左切换
                             (slideInHorizontally(slideSpec) { -it } + fadeIn(fadeSpec))
-                                .togetherWith(slideOutHorizontally(slideSpec) { it } + fadeOut(fadeSpec))
+                                .togetherWith(slideOutHorizontally(slideSpec) { it } + fadeOut(
+                                    fadeSpec
+                                ))
                         }
                     },
                     label = "TabAnimation"

@@ -29,7 +29,7 @@ object Api {
         this.client = client
     }
 
-    const val SOURCE_URL = "https://www.gubaiovo.com/jnu-exam/source_list.json"
+
 
 
     //没活了就..一下吧.............
@@ -64,15 +64,13 @@ object Api {
     }
 
     // 获取源
-    fun getSourceJson(application: Context) {
+    fun getSourceJson(application: Context,url: String,onSuccess: (String) -> Unit={}) {
 
 
         downloadFileToInternal(
-            application, SOURCE_URL, "source.json",
+            application, url, "source.json",
             false,
-            {
-
-            }, {
+            onSuccess, {
                 Toast.makeText(application, "网络错误:(", Toast.LENGTH_SHORT).show()
             })
 

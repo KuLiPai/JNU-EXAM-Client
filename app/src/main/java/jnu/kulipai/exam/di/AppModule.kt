@@ -31,7 +31,7 @@ val viewModelModule = module {
     viewModel { MainActivityViewModel(get(), get()) }
     viewModel { HomeViewModel(get(), get(), get(), get()) }
     viewModel { SettingsAppearanceViewModel(get()) }
-    viewModel { WelcomeViewModel(get(),get()) }
+    viewModel { WelcomeViewModel(get(),get(),get()) }
 }
 
 // App 主模块

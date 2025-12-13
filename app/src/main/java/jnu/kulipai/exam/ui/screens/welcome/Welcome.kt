@@ -87,13 +87,11 @@ var chipcolor = Color(0xffffdbd1)
 var chipborderColor = Color(0xffd8c2bc)
 
 
-lateinit var appPre: AppPreferences
 
 // 路由WelcomeScreen页面
 class WelcomeScreen : Screen {
     @Composable
     override fun Content() {
-        appPre = koinInject()
         val viewModel: WelcomeViewModel = koinViewModel()
         val isSystemDark = isSystemInDarkTheme()
         var isDarkTheme by remember { mutableStateOf(isSystemDark) }
@@ -416,10 +414,10 @@ class ThreeScreen(
                     if (selectedItem != null) {
                         sources?.let {
 
-                            appPre.repo = selectedItem?.name.toString()
-                            appPre.repoUrl = selectedItem?.jsonUrl.toString()
-                            appPre.repoKey = selectedItem?.fileKey.toString()
-                            appPre.isFirstLaunch = false
+                            viewModel.appPre.repo = selectedItem?.name.toString()
+                            viewModel.appPre.repoUrl = selectedItem?.jsonUrl.toString()
+                            viewModel.appPre.repoKey = selectedItem?.fileKey.toString()
+                            viewModel.appPre.isFirstLaunch = false
                             navigator.replaceAll(MainScreen())
                         }
                     } else {
@@ -428,6 +426,8 @@ class ThreeScreen(
 
                         } else {
                             viewModel.getSourceJson(sourceText)
+                            viewModel.appPre.sourceUrl = sourceText
+
 //                            appPre.repo = selectedItem?.name.toString()
 //                            appPre.repoUrl = selectedItem?.jsonUrl.toString()
 //                            appPre.repoKey = selectedItem?.fileKey.toString()
