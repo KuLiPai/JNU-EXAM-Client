@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import cafe.adriel.voyager.navigator.tab.Tab
 import cafe.adriel.voyager.navigator.tab.TabOptions
@@ -66,7 +67,7 @@ object HomeTab : Tab {
     override fun Content() {
         // 这里获取 ViewModel，Koin 会处理单例，不用担心重复创建
         val viewModel: HomeViewModel = koinViewModel()
-        val navigator = LocalNavigator.currentOrThrow
+        val navigator = LocalNavigator.currentOrThrow.parent ?: LocalNavigator.currentOrThrow
 
         // 把你原来 MainContent 里的逻辑移到这里
         HomeTabContent(viewModel, navigator)
@@ -77,7 +78,7 @@ object HomeTab : Tab {
 @Composable
 fun HomeTabContent(
     homeViewModel: HomeViewModel,
-    navigator: cafe.adriel.voyager.navigator.Navigator
+    navigator: Navigator
 ) {
     // 2. 这里的 state 放在 Scaffold 层级
     val scaffoldPadding = LocalScaffoldPadding.current
