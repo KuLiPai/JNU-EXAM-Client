@@ -6,7 +6,6 @@ import android.net.Uri
 import android.webkit.MimeTypeMap
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -176,8 +175,14 @@ class HomeViewModel(
     }
 
 
-    fun openFileWithOtherApp(relativePath: String) {
-        val file = File(application.getExternalFilesDir(""), relativePath)
+    fun openFileWithOtherApp(relativePath: String = "", absolutePath: String = "") {
+        var file: File = File("")
+        if (absolutePath.isEmpty()) {
+            file = File(application.getExternalFilesDir(""), relativePath)
+        } else {
+            file = File(absolutePath)
+        }
+//        val file = File(application.getExternalFilesDir(""), relativePath)
         if (!file.exists()) {
             throw IllegalArgumentException("File does not exist: $relativePath")
         }
@@ -224,8 +229,6 @@ class HomeViewModel(
         }
     }
 //
-
-
 
 
     var exportPath: String? = null

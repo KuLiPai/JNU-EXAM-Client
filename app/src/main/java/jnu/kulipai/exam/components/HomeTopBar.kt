@@ -1,5 +1,6 @@
 package jnu.kulipai.exam.components
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.animateContentSize
@@ -64,6 +65,12 @@ fun HomeTopBar(
     val searchText = homeViewModel.searchText.collectAsState()
     val focusManager = LocalFocusManager.current
     val focusRequester = remember { FocusRequester() }
+
+    // 拦截系统返回
+    BackHandler(enabled = pwd.value != "/") {
+        // 你可以弹窗确认、执行某些操作等
+        homeViewModel.handleBackPress()
+    }
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally
