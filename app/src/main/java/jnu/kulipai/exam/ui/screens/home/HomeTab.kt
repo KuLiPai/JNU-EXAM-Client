@@ -123,7 +123,7 @@ fun HomeTabContent(
                 LottieAnimation(
                     composition = composition,
                     progress = { progress },
-                    modifier = Modifier.offset(y = (-128).dp)
+//                    modifier = Modifier.offset(y = (-128).dp)
                 )
 
             }
