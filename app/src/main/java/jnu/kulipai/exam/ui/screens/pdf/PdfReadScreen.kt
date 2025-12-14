@@ -2,6 +2,7 @@ package jnu.kulipai.exam.ui.screens.pdf
 
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,6 +17,7 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
@@ -52,38 +54,32 @@ class PdfScreen : Screen {
 
 
         val viewModel: HomeViewModel = koinViewModel()
-        LocalNavigator.currentOrThrow
-        val appPrefs = viewModel.appPre
         val darkTheme by viewModel.darkTheme.collectAsStateWithLifecycle(0)
         var isAnimating by remember { mutableStateOf(false) }
-
-
+        val isDark = remember { mutableStateOf(false) }
+        isDark.value = when (darkTheme) {
+            0 -> isSystemInDarkTheme()
+            1 -> false
+            2 -> true
+            else -> false
+        }
 
 
         ScreenshotThemeTransition(
-            isDarkTheme = (darkTheme == 2),
+            isDarkTheme = isDark.value,
             modifier = Modifier
         ) { startAnim ->
             PdfScaffold(
-                isDarkTheme = when (darkTheme) {
-                    1 -> false
-                    2 -> true
-                    else -> false
-                },
+                isDarkTheme = isDark,
                 isAnimating = isAnimating,
                 homeViewModel = viewModel,
                 onThemeToggle = { animModel, x, y ->
 
-                    val isExpand = (darkTheme == 2)
+                    val isExpand = isDark.value
                     startAnim(Offset(x, y), isExpand) {
                         // 这个代码块会在截图完成后执行
-                        val newTheme = when (darkTheme) {
-                            1 -> true
-                            2 -> false
-                            else -> true
-                        }
-                        viewModel.updateDarkTheme(if (newTheme) 2 else 1)
-                        appPrefs.isNight = newTheme
+                        isDark.value=!isDark.value
+                        viewModel.updateDarkTheme(if (isDark.value) 2 else 1)
                     }
 
 
@@ -91,44 +87,6 @@ class PdfScreen : Screen {
                 },
             )
         }
-
-
-//        MaskBox(
-//            animTime = 1500L,
-//            maskComplete = {
-//                pendingThemeChange?.let { newTheme ->
-//
-//                    viewModel.updateDarkTheme(if (newTheme) 2 else 1)
-//                    appPrefs.isNight = newTheme
-//                    pendingThemeChange = null
-//                }
-//            },
-//            animFinish = {
-//                isAnimating = false
-//            }
-//        ) { maskAnimActiveEvent ->
-//            PdfScaffold(
-//                isDarkTheme = when (darkTheme) {
-//                    1 -> false
-//                    2 -> true
-//                    else -> false
-//                },
-//                isAnimating = isAnimating,
-//                homeViewModel = viewModel,
-//                onThemeToggle = { animModel, x, y ->
-//                    if (!isAnimating) {
-//                        isAnimating = true
-//                        pendingThemeChange = !when (darkTheme) {
-//                            1 -> false
-//                            2 -> true
-//                            else -> false
-//                        }
-//                        maskAnimActiveEvent(animModel, x, y)
-//                    }
-//                },
-//            )
-//        }
-
 
     }
 }
@@ -138,7 +96,7 @@ class PdfScreen : Screen {
 //标题栏
 @Composable
 fun PdfScaffold(
-    isDarkTheme: Boolean,
+    isDarkTheme: MutableState<Boolean>,
     isAnimating: Boolean,
     homeViewModel: HomeViewModel, // 接收 ViewModel
     onThemeToggle: MaskAnimActive
@@ -173,7 +131,7 @@ fun PdfScaffold(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
 
-                key(isDarkTheme) {
+                key(isDarkTheme.value) {
 
                     TopAppBar(
                         title = {

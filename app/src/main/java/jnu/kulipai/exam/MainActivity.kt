@@ -1,7 +1,6 @@
 package jnu.kulipai.exam
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -10,12 +9,12 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.Navigator
@@ -25,6 +24,7 @@ import jnu.kulipai.exam.ui.anim.AppTransition
 import jnu.kulipai.exam.ui.screens.home.MainScreen
 import jnu.kulipai.exam.ui.screens.welcome.WelcomeScreen
 import jnu.kulipai.exam.ui.theme.期末无挂Theme
+import jnu.kulipai.exam.util.Api.getSourceJson
 import kotlinx.coroutines.DelicateCoroutinesApi
 import org.koin.androidx.compose.koinViewModel
 
@@ -49,7 +49,12 @@ class MainActivity : ComponentActivity() {
         setContent {
 //            val navController = rememberNavController()
 
+
             val mainViewModel: MainActivityViewModel = koinViewModel()
+
+            LaunchedEffect(Unit) {
+                getSourceJson(this@MainActivity, mainViewModel.appPre.sourceUrl)
+            }
 
             /// 哈哈，没事就是笑笑
             val dynamicColors by mainViewModel.dc.collectAsStateWithLifecycle(isSystemInDarkTheme())

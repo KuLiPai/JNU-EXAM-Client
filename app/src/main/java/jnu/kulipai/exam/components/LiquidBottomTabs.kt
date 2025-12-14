@@ -64,9 +64,9 @@ fun LiquidBottomTabs(
     tabsCount: Int,
     modifier: Modifier = Modifier,
     myaccentColor: Color? = null,
+    isLightTheme: Boolean =!isSystemInDarkTheme(),
     content: @Composable RowScope.() -> Unit,
 ) {
-    val isLightTheme = !isSystemInDarkTheme()
     var accentColor: Color
     if (myaccentColor == null) {
         accentColor =

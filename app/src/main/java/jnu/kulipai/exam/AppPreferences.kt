@@ -17,9 +17,9 @@ class AppPreferences (
     var isFirstLaunch: Boolean
         get() = prefs.getBoolean(KEY_FIRST_LAUNCH, true)
         set(value) = prefs.edit { putBoolean(KEY_FIRST_LAUNCH, value) }
-    var isNight: Boolean
-        get() = prefs.getBoolean(NIGHT, false)
-        set(value) = prefs.edit { putBoolean(NIGHT, value) }
+//    var isNight: Boolean
+//        get() = prefs.getBoolean(NIGHT, false)
+//        set(value) = prefs.edit { putBoolean(NIGHT, value) }
     var repo: String
         get() = prefs.getString(REPO, "Github").toString()
         set(value) = prefs.edit { putString(REPO, value) }

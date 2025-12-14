@@ -24,9 +24,11 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -55,7 +57,6 @@ import jnu.kulipai.exam.components.LiquidBottomTab
 import jnu.kulipai.exam.components.LiquidBottomTabs
 import jnu.kulipai.exam.data.model.MaskAnimActive
 import jnu.kulipai.exam.ui.util.ScreenshotThemeTransition
-import jnu.kulipai.exam.util.Api.getSourceJson
 import org.koin.androidx.compose.koinViewModel
 
 class MainScreen : Screen {
@@ -68,12 +69,6 @@ class MainScreen : Screen {
         val viewModel: HomeViewModel = koinViewModel()
 
         val context = LocalContext.current
-
-
-        // 每次打开加载一次源
-        LaunchedEffect(Unit) {
-            getSourceJson(context, viewModel.appPre.sourceUrl)
-        }
 
 
         // 创建一个用于导出文件的回调
@@ -93,9 +88,6 @@ class MainScreen : Screen {
         }
 
 
-        val appPrefs = viewModel.appPre
-        // 初始化一次
-
         // 这个好乱，我问ai怎么优化代码，他让我再写一个类就写一个配置一行代码，我说能不能写进viewModel
         // ai说x，要写进一个新文件，
         // 我说f**k(
@@ -103,38 +95,34 @@ class MainScreen : Screen {
 
 
         val darkTheme by viewModel.darkTheme.collectAsStateWithLifecycle(0)
-        if (darkTheme == 0) {
-            viewModel.updateDarkTheme(if (isSystemInDarkTheme()) 2 else 1)
+        val isDark = remember { mutableStateOf(false) }
+        isDark.value = when (darkTheme) {
+            0 -> isSystemInDarkTheme()
+            1 -> false
+            2 -> true
+            else -> false
         }
 
 
         ScreenshotThemeTransition(
-            isDarkTheme = (darkTheme == 2),
+            isDarkTheme = isDark.value,
             modifier = Modifier
         ) { startAnim ->
 
             MainScaffold(
-                isDarkTheme = (darkTheme == 2),
+                isDarkTheme = isDark,
                 isAnimating = false, // 这个参数现在不重要了
                 homeViewModel = viewModel,
 
                 onThemeToggle = { _, x, y ->
 
-                    val isExpand = (darkTheme == 2)
+                    val isExpand = isDark.value
 
-                    // 调用 startAnim
-                    // 参数1: 位置
-                    // 参数2: 扩张还是收缩
-                    // 参数3: 【核心】真正切换数据的操作，放在这里面
                     startAnim(Offset(x, y), isExpand) {
                         // 这个代码块会在截图完成后执行
-                        val newTheme = when (darkTheme) {
-                            1 -> true
-                            2 -> false
-                            else -> true
-                        }
-                        viewModel.updateDarkTheme(if (newTheme) 2 else 1)
-                        appPrefs.isNight = newTheme
+                        isDark.value=!isDark.value
+
+                        viewModel.updateDarkTheme(if (isDark.value) 2 else 1)
 
                     }
                 },
@@ -150,7 +138,7 @@ val LocalScaffoldPadding = staticCompositionLocalOf { PaddingValues(0.dp) }
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScaffold(
-    isDarkTheme: Boolean,
+    isDarkTheme: MutableState<Boolean>,
     isAnimating: Boolean,
     homeViewModel: HomeViewModel,
     onThemeToggle: MaskAnimActive,
@@ -185,7 +173,7 @@ fun MainScaffold(
                 if (tabNavigator.current == HomeTab) {
                     HomeTopBar(
                         homeViewModel,
-                        isDarkTheme,
+                        isDarkTheme.value,
                         isAnimating,
                         onThemeToggle,
                         navController
@@ -193,9 +181,8 @@ fun MainScaffold(
                 }
             },
             bottomBar = {
-                // 5. 将底栏放在 Scaffold 的 bottomBar 中
-                key(isDarkTheme) { // 保留你的 key 逻辑
-                    val contentColor = if (isDarkTheme) Color.White else Color.Black
+                key(isDarkTheme.value) {
+                    val contentColor = if (isDarkTheme.value) Color.White else Color.Black
                     val iconColorFilter = ColorFilter.tint(contentColor)
 
                     LiquidBottomTabs(
@@ -208,6 +195,7 @@ fun MainScaffold(
                         },
                         backdrop = backdrop,  // 传入 backdrop
                         tabsCount = tabs.size,
+                        isLightTheme=!isDarkTheme.value,
                         modifier = Modifier
                             .padding(horizontal = 36.dp, vertical = 16.dp)
                             .navigationBarsPadding()
