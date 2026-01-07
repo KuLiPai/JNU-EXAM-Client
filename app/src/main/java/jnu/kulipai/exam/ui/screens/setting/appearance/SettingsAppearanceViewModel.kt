@@ -3,7 +3,7 @@ package jnu.kulipai.exam.ui.screens.setting.appearance
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import jnu.kulipai.exam.ui.theme.ThemeSettingsManager
+import jnu.kulipai.exam.data.datastore.ThemeSettingsManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 

@@ -52,11 +52,11 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import cafe.adriel.voyager.navigator.tab.TabNavigator
 import com.kyant.backdrop.backdrops.layerBackdrop
 import com.kyant.backdrop.backdrops.rememberLayerBackdrop
-import jnu.kulipai.exam.components.HomeTopBar
-import jnu.kulipai.exam.components.LiquidBottomTab
-import jnu.kulipai.exam.components.LiquidBottomTabs
+import jnu.kulipai.exam.ui.components.HomeTopBar
+import jnu.kulipai.exam.ui.components.LiquidBottomTab
+import jnu.kulipai.exam.ui.components.LiquidBottomTabs
 import jnu.kulipai.exam.data.model.MaskAnimActive
-import jnu.kulipai.exam.ui.util.ScreenshotThemeTransition
+import jnu.kulipai.exam.ui.anim.ScreenshotThemeTransition
 import org.koin.androidx.compose.koinViewModel
 
 class MainScreen : Screen {

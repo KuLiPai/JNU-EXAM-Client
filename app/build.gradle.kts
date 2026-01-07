@@ -101,9 +101,6 @@ dependencies {
     // m3 i like
     implementation(libs.androidx.material3)
     implementation(libs.androidx.compose.material3)
-    // 无语，和上面的冲突，还要compileOnly不能implementation，解决了一下午，早上顿悟才解决，真是无语了
-    //删了彻底解决问题
-//    compileOnly(libs.material3.jvmstubs)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
@@ -125,34 +122,15 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     //波浪加载动画
     implementation(libs.composewaveloading)
-    //老牌http轻量强大完整库
-    //由于某些原因不用了，取而代之是Ktor，或许以后能升级KMP，总之kotlin万岁
-//    implementation(libs.okhttp)
 
-    // 目前我见过最好的pdf预览库了
-//    implementation(libs.jetpdfvue)
     // kmp的pdf预览，上面那个会复制文件，乱死了
     implementation(libs.compose.pdf)
-    //Compose pdf库 只能安卓13以上使用
-//    implementation(libs.bouquet)
-//    implementation(libs.android.pdf.viewer)
-
-    // Hilt 依赖
-    // 在compose中感觉能用上，第一次用
-    // 由于某些原因不用了，虽然是安卓官方推荐的，取而代之是Koin，或许以后能升级KMP。总之kotlin万岁
-    // 可能hilt有点神秘，或许是复杂了
-//    implementation(libs.hilt.android)
-//    ksp(libs.hilt.android.compiler)
-//    implementation(libs.androidx.hilt.navigation.compose)
 
     // destinations自动路由，路由器（
     //wowwowow 太好用了吧，看文档晕晕的，用下来也太爽了，只能说无敌
     // 12.12 突然用起来没那么方便了，不知道为什么，总之我曾经用过，
     // 当时用的时候直接用的最新办，官方大概api，一个ai都写不对，影视看文档写出来了
     // h
-//    implementation(libs.core)
-//    ksp(libs.compose.destinations.ksp)
-
 
     // kolor!!
     implementation(libs.materialKolor)
@@ -167,7 +145,7 @@ dependencies {
 
 
     // Koin BOM
-    // 轻量而kotlin友好现代方便易懂简单的注入
+    // 轻量而kotlin友好的现代方便易懂简单的注入
     implementation(platform(libs.koin.bom))
 
     // Koin Core

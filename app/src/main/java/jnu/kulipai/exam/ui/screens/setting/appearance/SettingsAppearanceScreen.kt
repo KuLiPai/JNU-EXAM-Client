@@ -1,5 +1,6 @@
 package jnu.kulipai.exam.ui.screens.setting.appearance
 
+import android.content.Context
 import android.os.Build
 import android.widget.Toast
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -44,16 +45,16 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import com.materialkolor.PaletteStyle
 import com.materialkolor.rememberDynamicColorScheme
 import jnu.kulipai.exam.R
-import jnu.kulipai.exam.components.PreferenceRow
-import jnu.kulipai.exam.components.PreferenceRowSwitch
-import jnu.kulipai.exam.components.ScrollbarLazyColumn
+import jnu.kulipai.exam.ui.components.PreferenceRow
+import jnu.kulipai.exam.ui.components.PreferenceRowSwitch
+import jnu.kulipai.exam.ui.components.ScrollbarLazyColumn
 import jnu.kulipai.exam.data.constants.PreferencesConstants
 import jnu.kulipai.exam.ui.screens.setting.AppThemeItem
 import jnu.kulipai.exam.ui.screens.setting.SelectionDialog
 import jnu.kulipai.exam.ui.screens.setting.SettingsScaffoldLazyColumn
 import jnu.kulipai.exam.ui.screens.setting.components.AppThemePreviewItem
 import jnu.kulipai.exam.ui.screens.setting.components.ColorPickerDialog
-import jnu.kulipai.exam.ui.theme.ThemeSettingsManager
+import jnu.kulipai.exam.data.datastore.ThemeSettingsManager
 import jnu.kulipai.exam.ui.theme.期末无挂Theme
 import org.koin.androidx.compose.koinViewModel
 
@@ -65,7 +66,7 @@ class SettingsAppearanceScreen : Screen {
 
         val navigator = LocalNavigator.currentOrThrow
         val viewModel: SettingsAppearanceViewModel = koinViewModel()
-        val context = LocalContext.current
+        val context = LocalContext.current as Context
 
         var darkModeDialog by rememberSaveable { mutableStateOf(false) }
         var paletteStyleDialog by rememberSaveable { mutableStateOf(false) }

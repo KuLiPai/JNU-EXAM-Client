@@ -9,14 +9,13 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import jnu.kulipai.exam.AppPreferences
+import jnu.kulipai.exam.data.datastore.AppPreferences
 import jnu.kulipai.exam.data.model.DirNode
 import jnu.kulipai.exam.data.model.DownLoadState
 import jnu.kulipai.exam.data.model.FileItem
 import jnu.kulipai.exam.data.model.LoadingState
 import jnu.kulipai.exam.data.repository.FileRepository
-import jnu.kulipai.exam.ui.theme.ThemeSettingsManager
-import jnu.kulipai.exam.util.Api
+import jnu.kulipai.exam.data.datastore.ThemeSettingsManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -109,7 +108,7 @@ class HomeViewModel(
             _loadingState.value = LoadingState.Step
             delay(80) // 模拟动画或操作延迟
             _currentPath.value = if (folderName == "..") {
-                Api.DotDot(_currentPath.value)
+                Api.dotDot(_currentPath.value)
             } else {
                 _currentPath.value + "$folderName/"
             }
@@ -123,7 +122,7 @@ class HomeViewModel(
             viewModelScope.launch {
                 _loadingState.value = LoadingState.Step
                 delay(250)
-                _currentPath.value = Api.DotDot(_currentPath.value)
+                _currentPath.value = Api.dotDot(_currentPath.value)
                 _loadingState.value = LoadingState.Loaded
             }
         } else {

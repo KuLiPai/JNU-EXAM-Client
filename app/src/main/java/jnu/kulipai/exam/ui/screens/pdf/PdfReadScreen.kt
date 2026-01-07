@@ -31,15 +31,13 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
 import jnu.kulipai.exam.data.model.MaskAnimActive
 import dev.zt64.compose.pdf.PdfState
 import dev.zt64.compose.pdf.component.PdfPage
 import dev.zt64.compose.pdf.rememberLocalPdfState
-import jnu.kulipai.exam.components.ThemeToggleButton
+import jnu.kulipai.exam.ui.components.ThemeToggleButton
 import jnu.kulipai.exam.ui.screens.home.HomeViewModel
-import jnu.kulipai.exam.ui.util.ScreenshotThemeTransition
+import jnu.kulipai.exam.ui.anim.ScreenshotThemeTransition
 import jnu.kulipai.exam.util.Cache
 import org.koin.androidx.compose.koinViewModel
 import java.io.File

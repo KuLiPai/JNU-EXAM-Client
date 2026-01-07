@@ -55,13 +55,11 @@ import com.airbnb.lottie.compose.rememberLottieComposition
 import com.github.compose.waveloading.DrawType
 import com.github.compose.waveloading.WaveLoading
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import jnu.kulipai.exam.AppPreferences
 import jnu.kulipai.exam.R
+import jnu.kulipai.exam.data.model.SourceItem
 import jnu.kulipai.exam.ui.anim.SlideAnimationScreen
 import jnu.kulipai.exam.ui.screens.home.MainScreen
-import jnu.kulipai.exam.util.Api
 import org.koin.androidx.compose.koinViewModel
-import org.koin.compose.koinInject
 
 
 //究极烂的赋值
