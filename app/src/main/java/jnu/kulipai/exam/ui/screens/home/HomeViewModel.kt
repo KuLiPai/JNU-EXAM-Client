@@ -9,17 +9,27 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import jnu.kulipai.exam.core.common.d
+import jnu.kulipai.exam.core.file.FileManager
+import jnu.kulipai.exam.core.file.PathUtil
+import jnu.kulipai.exam.core.network.DownloadDataSource
 import jnu.kulipai.exam.data.datastore.AppPreferences
+import jnu.kulipai.exam.data.datastore.ThemeSettingsManager
+import jnu.kulipai.exam.data.model.ChangeSourceEvent
 import jnu.kulipai.exam.data.model.DirNode
+import jnu.kulipai.exam.data.model.DirectoryResult
 import jnu.kulipai.exam.data.model.DownLoadState
 import jnu.kulipai.exam.data.model.FileItem
 import jnu.kulipai.exam.data.model.LoadingState
+import jnu.kulipai.exam.data.model.SourceItem
 import jnu.kulipai.exam.data.repository.FileRepository
-import jnu.kulipai.exam.data.datastore.ThemeSettingsManager
+import jnu.kulipai.exam.data.repository.SourceRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.io.File
@@ -28,18 +38,115 @@ import java.io.OutputStream
 
 //哇好像很方便，在一个地方统一管理需要context的函数
 //用流来管理全局变量，神奇的感觉:))))))
-
+// TODO)) 只注入Repository
 class HomeViewModel(
     private val fileRepository: FileRepository,
     private val appPreferences: AppPreferences,
     private val application: Application,
     private val themeSettingsManager: ThemeSettingsManager,
+    private val downloadDataSource: DownloadDataSource,
+    private val sourceRepository: SourceRepository,
+    private val fileManager: FileManager,
 
     ) : ViewModel() {
 
+    var repo = appPreferences.repo
+    val sourceUrl = appPreferences.sourceUrl
+    val update = appPreferences.update
+    val cooldown = appPreferences.cooldown
+    val repoKey = appPreferences.repoKeyFlow
+    val repoUrl = appPreferences.repoUrl
+    val day = appPreferences.day
 
-    var currentFile = MutableStateFlow(File("/"))
+    fun updateSourceUrl(value: String) {
+        viewModelScope.launch {
+            appPreferences.setSourceUrl(value)
+        }
+    }
 
+
+    fun updateUpdate(value: Int) {
+        viewModelScope.launch {
+            appPreferences.setUpdate(value)
+        }
+    }
+
+
+    fun updateCooldown(value: Long) {
+        viewModelScope.launch {
+            appPreferences.setCooldown(value)
+        }
+    }
+
+
+    fun updateRepo(value: String) {
+        viewModelScope.launch {
+            appPreferences.setRepo(value)
+        }
+    }
+
+    fun updateDay(value: Long) {
+        viewModelScope.launch {
+            appPreferences.setDay(value)
+        }
+    }
+
+    fun updateRepoKey(value: String) {
+        viewModelScope.launch {
+            appPreferences.setRepoKey(value)
+        }
+    }
+
+    fun updateRepoUrl(value: String) {
+        viewModelScope.launch {
+            appPreferences.setRepoUrl(value)
+        }
+    }
+
+    fun changeSource(url: String) {
+        changeSourceInternal(
+            sourceUrl = url,
+            toastOnSuccess = "更换成功"
+        )
+    }
+
+    fun resetSourceToDefault() {
+        changeSourceInternal(
+            sourceUrl = "https://www.gubaiovo.com/jnu-exam/source_list.json",
+            toastOnSuccess = "已恢复默认"
+        )
+    }
+
+    private var _changeSourceEvent = MutableSharedFlow<ChangeSourceEvent>()
+    val changeSourceEvent = _changeSourceEvent.asSharedFlow()
+
+    private fun changeSourceInternal(
+        sourceUrl: String,
+        toastOnSuccess: String
+    ) {
+        viewModelScope.launch {
+            updateSourceUrl(sourceUrl)
+            updateRepoUrl(sourceUrl)
+
+            fetchSources(sourceUrl)
+                .onSuccess {
+                    _changeSourceEvent.emit(
+                        ChangeSourceEvent.SourceChangeSuccess(toastOnSuccess)
+                    )
+                }
+                .onFailure { e ->
+                    _changeSourceEvent.emit(
+                        ChangeSourceEvent.SourceChangeFailed(
+                            e.message ?: "源更新失败"
+                        )
+                    )
+                }
+        }
+    }
+
+    suspend fun fetchSources(url: String): Result<List<SourceItem>> {
+        return sourceRepository.fetchSources(url)
+    }
 
     val darkTheme = themeSettingsManager.darkTheme
 
@@ -54,36 +161,63 @@ class HomeViewModel(
         exportLauncher = arl
     }
 
-    private var _isSearch = MutableStateFlow(false)
-    var isSearch = _isSearch.asStateFlow()
 
-    fun setisSearch(bool: Boolean) {
-        _isSearch.value = bool
-    }
-
-    val appPre = appPreferences
+//    private var _isSearch = MutableStateFlow(false)
+//    var isSearch = _isSearch.asStateFlow()
+//
+//    fun setIsSearch(bool: Boolean) {
+//        _isSearch.value = bool
+//    }
 
     private var _searchText = MutableStateFlow("")
     var searchText = _searchText.asStateFlow()
 
     fun setSearchText(text: String) {
         _searchText.value = text
+        if (text.isEmpty()) {
+            fileManager.getDirContent(root.value, currentPath.value)?.let {
+                _fileNodeData.value = it.subDirs + it.files
+            }
+            return
+
+        }
+        if (text.isNotEmpty()) {
+            _fileNodeData.value = fileManager.searchFiles(root.value, searchText.value)
+
+        } else if (currentPath.value == "/") {
+            fileManager.getDirContent(root.value, currentPath.value)?.let {
+                _fileNodeData.value = it.subDirs + it.files
+            }
+        } else {
+            fileManager.getDirContent(root.value, currentPath.value)?.let {
+                _fileNodeData.value = listOf(
+                    DirNode(
+                        name = "..",
+                        path = "",
+                    )
+                ) + it.subDirs + it.files
+            }
+        }
     }
+
+
+    private var _fileNodeData = MutableStateFlow<List<Any>>(listOf())
+    var fileNodeData = _fileNodeData.asStateFlow()
+
 
     private val _loadingState = MutableStateFlow(LoadingState.Loading)
     val loadingState: StateFlow<LoadingState> = _loadingState.asStateFlow()
-
 
     fun setLoadingState(newState: LoadingState) {
         _loadingState.value = newState // 只有在 ViewModel 内部才能修改 _loadingState.value
     }
 
 
-    private val _currentPath = MutableStateFlow("/")
+    private val _currentPath = MutableStateFlow("")
     val currentPath: StateFlow<String> = _currentPath.asStateFlow()
 
     private var _root = MutableStateFlow(DirNode("root", "/")) // ViewModel 持有 root 节点
-    val root: StateFlow<DirNode> = _root
+    val root: StateFlow<DirNode> = _root.asStateFlow()
 
 
     init {
@@ -94,8 +228,19 @@ class HomeViewModel(
         viewModelScope.launch {
             _loadingState.value = LoadingState.Loading
             try {
-                _root.value = fileRepository.getDirectoryTree(application) // 传入 application context
-                _loadingState.value = LoadingState.Loaded
+                when (val result = fileRepository.getDirectoryTree()) {
+                    is DirectoryResult.Error -> {
+                        Toast.makeText(application, "网络异常", Toast.LENGTH_SHORT).show()
+                        _loadingState.value = LoadingState.Err
+                    }
+
+                    is DirectoryResult.Success -> {
+                        "123".d()
+                        navigateTo("")
+                        _root.value = result.tree
+                        _loadingState.value = LoadingState.Loaded
+                    }
+                }
             } catch (e: Exception) {
                 Toast.makeText(application, "加载失败: ${e.message}", Toast.LENGTH_SHORT).show()
                 _loadingState.value = LoadingState.Err // 加载失败时进入错误状态
@@ -108,9 +253,24 @@ class HomeViewModel(
             _loadingState.value = LoadingState.Step
             delay(80) // 模拟动画或操作延迟
             _currentPath.value = if (folderName == "..") {
-                Api.dotDot(_currentPath.value)
+
+                PathUtil.dotDot(_currentPath.value)
             } else {
                 _currentPath.value + "$folderName/"
+            }
+            if (_currentPath.value == "/") {
+                fileManager.getDirContent(_root.value, _currentPath.value)?.let {
+                    _fileNodeData.value = it.subDirs + it.files
+                }
+            } else {
+                fileManager.getDirContent(_root.value, _currentPath.value)?.let {
+                    _fileNodeData.value = listOf(
+                        DirNode(
+                            name = "..",
+                            path = "",
+                        )
+                    ) + it.subDirs + it.files
+                }
             }
 //            delay(100) // 模拟动画或操作延迟
             _loadingState.value = LoadingState.Loaded
@@ -122,7 +282,7 @@ class HomeViewModel(
             viewModelScope.launch {
                 _loadingState.value = LoadingState.Step
                 delay(250)
-                _currentPath.value = Api.dotDot(_currentPath.value)
+                _currentPath.value = PathUtil.dotDot(_currentPath.value)
                 _loadingState.value = LoadingState.Loaded
             }
         } else {
@@ -132,18 +292,29 @@ class HomeViewModel(
         }
     }
 
-    fun updateRepositoryData(callBack:()-> Unit ={}) {
+    fun updateRepositoryData(callBack: () -> Unit = {}) {
         viewModelScope.launch {
             _loadingState.value = LoadingState.Loading
             try {
                 File(application.filesDir, "cache.json").delete()
 
                 // 这里直接调用 repository 的逻辑
-                val newRoot =
-                    fileRepository.getDirectoryTree(application) // 假设 repository 有一个 forceUpdate 参数
-                _root.value = newRoot
-                _loadingState.value = LoadingState.Loaded
-                appPreferences.day = System.currentTimeMillis()
+                when (val result = fileRepository.getDirectoryTree()) {
+                    is DirectoryResult.Error -> {
+                        Toast.makeText(application, "网络异常", Toast.LENGTH_SHORT).show()
+
+                        _loadingState.value = LoadingState.Err
+                    }
+
+                    is DirectoryResult.Success -> {
+                        _root.value = result.tree
+                        _loadingState.value = LoadingState.Loaded
+                        appPreferences.setDay(System.currentTimeMillis())
+                    }
+                }
+                // 假设 repository 有一个 forceUpdate 参数
+
+
                 Toast.makeText(application, "数据已更新！", Toast.LENGTH_SHORT).show()
             } catch (e: Exception) {
                 Toast.makeText(application, "更新失败: ${e.message}", Toast.LENGTH_SHORT).show()
@@ -157,18 +328,15 @@ class HomeViewModel(
     fun downloadFile(fileItem: FileItem, downloadCallback: (DownLoadState) -> Unit) {
         viewModelScope.launch {
             downloadCallback(DownLoadState.DownLoading)
-            try {
-                val url = fileItem.url
-                Api.downloadFileToInternal(
-                    application, // 使用 application context
-                    url,
-                    fileItem.path,
-                    true,
-                    { downloadCallback(DownLoadState.Downloaded) },
-                    { downloadCallback(DownLoadState.Err) }
-                )
-            } catch (e: Exception) {
-                Toast.makeText(application, "下载失败: ${e.message}", Toast.LENGTH_SHORT).show()
+            val url = fileItem.url
+            downloadDataSource.download(
+                url,
+                fileItem.path,
+                true,
+            ).onSuccess {
+                downloadCallback(DownLoadState.Downloaded)
+            }.onFailure {
+                Toast.makeText(application, "网络错误", Toast.LENGTH_SHORT).show()
                 downloadCallback(DownLoadState.Err)
             }
         }

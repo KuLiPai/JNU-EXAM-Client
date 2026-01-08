@@ -14,13 +14,14 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.currentOrThrow
@@ -32,17 +33,17 @@ import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
 import jnu.kulipai.exam.R
-import jnu.kulipai.exam.ui.components.BounceUpButton
-import jnu.kulipai.exam.ui.components.FileCard
-import jnu.kulipai.exam.ui.components.FolderCard
 import jnu.kulipai.exam.data.model.DirNode
 import jnu.kulipai.exam.data.model.FileItem
 import jnu.kulipai.exam.data.model.LoadingState
-import jnu.kulipai.exam.core.file.FileManager
+import jnu.kulipai.exam.ui.components.BounceUpButton
+import jnu.kulipai.exam.ui.components.FileCard
+import jnu.kulipai.exam.ui.components.FolderCard
 import org.koin.androidx.compose.koinViewModel
 
 // HomeTab.kt
 object HomeTab : Tab {
+    private fun readResolve(): Any = HomeTab
 
     // 这里的 options 是 Tab 接口强制要求的
     override val options: TabOptions
@@ -50,7 +51,6 @@ object HomeTab : Tab {
             val title = "主页"
             val icon = rememberVectorPainter(Icons.Default.Cloud)
 
-            // 因为 options 会被频繁调用，建议用 remember 包裹
             return remember {
                 TabOptions(
                     index = 0u,
@@ -74,19 +74,18 @@ object HomeTab : Tab {
 // 抽离出来的纯内容组件，保持逻辑清晰
 @Composable
 fun HomeTabContent(
-    homeViewModel: HomeViewModel,
+    viewModel: HomeViewModel,
     navigator: Navigator
 ) {
     // 2. 这里的 state 放在 Scaffold 层级
     val scaffoldPadding = LocalScaffoldPadding.current
 
-    val appPrefs = homeViewModel.appPre
+    val update by viewModel.update.collectAsStateWithLifecycle(0)
+    val day by viewModel.day.collectAsStateWithLifecycle(0L)
+
     val loadingState =
-        homeViewModel.loadingState.collectAsState() // 从 ViewModel 收集 loadingState
-    val pwd = homeViewModel.currentPath.collectAsState() // 从 ViewModel 收集 loadingState
-    val root = homeViewModel.root.collectAsState() // 从 ViewModel 收集 loadingState
-    val searchText = homeViewModel.searchText.collectAsState() // 从 ViewModel 收集 loadingState
-    val isSearch = homeViewModel.isSearch.collectAsState()
+        viewModel.loadingState.collectAsStateWithLifecycle() // 从 ViewModel 收集 loadingState
+    val fileNodeData by viewModel.fileNodeData.collectAsStateWithLifecycle()
 
     val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.app_list_loading))
     val progress by animateLottieCompositionAsState(
@@ -132,29 +131,6 @@ fun HomeTabContent(
                 exit = fadeOut(animationSpec = tween(durationMillis = 50)),
             ) {
 
-                lateinit var newdata: List<Any>
-
-
-                if (searchText.value.isNotEmpty() && isSearch.value) {
-                    newdata = FileManager.searchFiles(root.value, searchText.value)
-
-                } else if (pwd.value == "/") {
-                    val targetContent = FileManager.getDirContent(root.value, pwd.value)
-                    targetContent?.let {
-                        newdata = it.subDirs + it.files
-                    }
-                } else {
-                    val targetContent = FileManager.getDirContent(root.value, pwd.value)
-                    targetContent?.let {
-                        newdata = listOf(
-                            DirNode(
-                                name = "..",
-                                path = "",
-                            )
-                        ) + it.subDirs + it.files
-                    }
-                }
-
 
                 Box {
 
@@ -164,13 +140,13 @@ fun HomeTabContent(
                             bottom = scaffoldPadding.calculateBottomPadding() + 80.dp // 如果需要额外空隙防止太贴边，可以在这里 + dp
                         )
                     ) {
-                        items(newdata) { item ->
+                        items(fileNodeData) { item ->
                             if (item is DirNode) {
                                 FolderCard(name = item.name, { name ->
-                                    homeViewModel.navigateTo(name)
+                                    viewModel.navigateTo(name)
                                 })
                             } else if (item is FileItem) {
-                                FileCard(item, homeViewModel, navigator)
+                                FileCard(item, viewModel, navigator)
                             }
 
                         }
@@ -183,16 +159,16 @@ fun HomeTabContent(
 
 
 
-                if (appPrefs.update != 0) {
+                if (update != 0) {
                     // 第一次打开，记录时间
-                    val firstOpenTime by remember { mutableLongStateOf(appPrefs.day) }
+                    val firstOpenTime by remember { mutableLongStateOf(day) }
 
                     if (firstOpenTime == -1L) {
-                        appPrefs.day = System.currentTimeMillis()
+                        viewModel.updateDay(System.currentTimeMillis())
                     } else {
-                        if ((System.currentTimeMillis() - firstOpenTime) / (1000 * 60 * 60 * 24) >= appPrefs.update) {
+                        if ((System.currentTimeMillis() - firstOpenTime) / (1000 * 60 * 60 * 24) >= update) {
                             BounceUpButton({
-                                homeViewModel.updateRepositoryData()
+                                viewModel.updateRepositoryData()
                             })
                         }
                     }

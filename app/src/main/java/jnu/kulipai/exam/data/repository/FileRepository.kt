@@ -1,11 +1,13 @@
 package jnu.kulipai.exam.data.repository
 
+import jnu.kulipai.exam.core.common.d
 import jnu.kulipai.exam.data.datastore.AppPreferences
 import jnu.kulipai.exam.core.common.isBlankJson
 import jnu.kulipai.exam.core.file.FileManager
 import jnu.kulipai.exam.core.network.NetworkDataSource
 import jnu.kulipai.exam.data.model.DirectoryError
 import jnu.kulipai.exam.data.model.DirectoryResult
+import kotlinx.coroutines.flow.first
 
 
 class FileRepository(
@@ -21,7 +23,7 @@ class FileRepository(
             if (fileManager.exists(cachePath)) {
                 fileManager.read(cachePath)
             } else {
-                val text = network.getText(appPreferences.repoUrl)
+                val text = network.getText(appPreferences.repoUrl.first())
                     .getOrElse { return DirectoryResult.Error(DirectoryError.NetworkFailed) }
 
                 if (text.isBlankJson()) {
@@ -42,6 +44,7 @@ class FileRepository(
 
         // json内容为"",或"null"
         if (json.isBlankJson()) {
+
             fileManager.delete(cachePath) // 💡 关键：防止坏缓存永久污染
             return DirectoryResult.Error(DirectoryError.EmptyJson)
         }
@@ -49,13 +52,16 @@ class FileRepository(
 
         return runCatching {
             DirectoryResult.Success(
-                fileManager.buildDirectoryTree(json, appPreferences)
+                fileManager.buildDirectoryTree(json, appPreferences.repoKeyFlow.first())
             )
         }.getOrElse {
             fileManager.delete(cachePath)
             DirectoryResult.Error(DirectoryError.BuildFailed)
         }
     }
+
+
+
 
 }
 

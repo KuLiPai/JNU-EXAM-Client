@@ -47,6 +47,10 @@ ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx
 
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
 
+
+material = { group = "androidx.compose.material", name = "material" }
+
+
 #material = { group = "androidx.compose.material", name = "material" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3-android" }
 androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }

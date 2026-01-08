@@ -1,6 +1,6 @@
 package jnu.kulipai.exam.core.file
 
-class PathUtil {
+object PathUtil {
     fun dotDot(path: String): String {
         val trimmed = path.trimEnd('/')
         val lastSlashIndex = trimmed.lastIndexOf('/')

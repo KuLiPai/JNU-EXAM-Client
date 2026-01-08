@@ -44,6 +44,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 object ManagerTab : Tab {
+    private fun readResolve(): Any = ManagerTab
 
     override val options: TabOptions
         @Composable

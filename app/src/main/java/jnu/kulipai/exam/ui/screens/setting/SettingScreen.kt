@@ -40,11 +40,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.kaajjo.libresudoku.ui.more.about.AboutScreen
 import jnu.kulipai.exam.R
+import jnu.kulipai.exam.data.model.ChangeSourceEvent
+import jnu.kulipai.exam.data.model.SourceMapper.fromJson
 import jnu.kulipai.exam.ui.components.PreferenceRow
 import jnu.kulipai.exam.ui.components.ScrollbarLazyColumn
 import jnu.kulipai.exam.ui.components.collapsing_topappbar.CollapsingTitle
@@ -65,7 +68,6 @@ fun SettingsTabContent() {
     val navigator = LocalNavigator.currentOrThrow.parent ?: LocalNavigator.currentOrThrow
     val viewModel: HomeViewModel = koinViewModel()
     val context = LocalContext.current
-    val appPre = viewModel.appPre
 
     // 注意：在 UI 线程读文件可能会卡顿，建议以后放入 IO 线程或 ViewModel
     // 这里为了不破坏你原有逻辑，暂时保留
@@ -74,17 +76,17 @@ fun SettingsTabContent() {
     } catch (e: Exception) {
         "[]"
     }
-    val repoList = Api.parseSources(repoListStr)
+    val repoList = fromJson(repoListStr)
 
     var repoModeDialog by rememberSaveable { mutableStateOf(false) }
     var updateModeDialog by rememberSaveable { mutableStateOf(false) }
     var sourceModeDialog by rememberSaveable { mutableStateOf(false) }
-    var currentRepo by rememberSaveable { mutableStateOf(viewModel.appPre.repo) }
-    var currentSource by rememberSaveable { mutableStateOf(viewModel.appPre.sourceUrl) }
-    var currentUpdate by rememberSaveable { mutableStateOf(viewModel.appPre.update) }
-    var cooldown by rememberSaveable { mutableStateOf(viewModel.appPre.cooldown) }
+    val currentRepo = viewModel.repo.collectAsStateWithLifecycle("")
+    val currentSource = viewModel.sourceUrl.collectAsStateWithLifecycle("")
+    val currentUpdate = viewModel.update.collectAsStateWithLifecycle(0)
+    val cooldown = viewModel.cooldown.collectAsStateWithLifecycle(0)
 
-    var progress by remember { mutableStateOf((System.currentTimeMillis() - cooldown) / 100000f) }
+    var progress by remember { mutableStateOf((System.currentTimeMillis() - cooldown.value) / 100000f) }
 
     if (progress > 1f) progress = 1f
 
@@ -93,6 +95,21 @@ fun SettingsTabContent() {
         animationSpec = tween(durationMillis = 900),
         label = "progressAnimation"
     )
+
+    LaunchedEffect(Unit) {
+        viewModel.changeSourceEvent.collect { event ->
+            when (event) {
+                is ChangeSourceEvent.SourceChangeSuccess -> {
+                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+                }
+                is ChangeSourceEvent.SourceChangeFailed -> {
+                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+
 
     LaunchedEffect(Unit) {
         while (true) {
@@ -132,9 +149,9 @@ fun SettingsTabContent() {
                     title = "更换源",
                     subtitle = "当前${
                         try {
-                            URL(currentSource).host
+                            URL(currentSource.value).host
                         } catch (e: Exception) {
-                            currentSource
+                            currentSource.value
                         }
                     }",
                     onClick = { sourceModeDialog = true },
@@ -147,12 +164,12 @@ fun SettingsTabContent() {
             item {
                 PreferenceRow(
                     title = "更换仓库",
-                    subtitle = "当前$currentRepo",
+                    subtitle = "当前${currentRepo.value}",
                     onClick = { repoModeDialog = true },
                     painter = painterResource(
-                        if (viewModel.appPre.repo.contains("github", ignoreCase = true)) {
+                        if (currentRepo.value.contains("github", ignoreCase = true)) {
                             R.drawable.github_142_svgrepo_com // 请确保你有这个资源
-                        } else if (viewModel.appPre.repo.contains(
+                        } else if (currentRepo.value.contains(
                                 "Cloudflare",
                                 ignoreCase = true
                             )
@@ -176,9 +193,9 @@ fun SettingsTabContent() {
                     onClick = {
                         if (progress >= 1f) {
                             progress = 0f
-                            viewModel.appPre.cooldown = System.currentTimeMillis()
+                            viewModel.updateCooldown(System.currentTimeMillis())
                             viewModel.updateRepositoryData({
-                                viewModel.appPre.cooldown -= 100000
+                                viewModel.updateCooldown(cooldown.value - 100000)
                                 progress = 1f
                             })
                         } else {
@@ -192,11 +209,11 @@ fun SettingsTabContent() {
             item {
                 PreferenceRow(
                     title = "自动更新",
-                    subtitle = if (currentUpdate == 0) "从不" else "每${currentUpdate}天更新",
+                    subtitle = if (currentUpdate.value == 0) "从不" else "每${currentUpdate}天更新",
                     onClick = { updateModeDialog = true },
                     painter = rememberVectorPainter(
-                        if (currentUpdate == 0) Icons.Default.UpdateDisabled
-                        else if (currentUpdate == 36500) Icons.Default.QuestionMark
+                        if (currentUpdate.value == 0) Icons.Default.UpdateDisabled
+                        else if (currentUpdate.value == 36500) Icons.Default.QuestionMark
                         else Icons.Default.Update
                     )
                 )
@@ -218,13 +235,14 @@ fun SettingsTabContent() {
         SelectionDialog(
             title = "选择仓库",
             selections = repoList.map { it.name },
-            selected = repoList.map { it.name }.indexOf(viewModel.appPre.repo).coerceAtLeast(0),
+            selected = repoList.map { it.name }.indexOf(currentRepo.value).coerceAtLeast(0),
             onSelect = { index ->
                 if (index in repoList.indices) {
-                    currentRepo = repoList[index].name
-                    appPre.repoKey = repoList[index].fileKey
-                    appPre.repoUrl = repoList[index].jsonUrl
-                    viewModel.appPre.repo = currentRepo
+                    viewModel.updateRepo(repoList[index].name)
+
+                    viewModel.updateRepoKey(repoList[index].fileKey)
+                    viewModel.updateRepoUrl(repoList[index].jsonUrl)
+
                 }
             },
             onDismiss = { repoModeDialog = false }
@@ -243,14 +261,16 @@ fun SettingsTabContent() {
                 "一年",
                 "一个世纪"
             ),
-            selected = when (currentUpdate) {
+            selected = when (currentUpdate.value) {
                 0 -> 0; 1 -> 1; 3 -> 2; 7 -> 3; 30 -> 4; 90 -> 5; 365 -> 6; 36500 -> 7; else -> 0
             },
             onSelect = { index ->
-                currentUpdate = when (index) {
-                    0 -> 0; 1 -> 1; 2 -> 3; 3 -> 7; 4 -> 30; 5 -> 90; 6 -> 365; 7 -> 36500; else -> 0
-                }
-                viewModel.appPre.update = currentUpdate
+                viewModel.updateUpdate(
+                    when (index) {
+                        0 -> 0; 1 -> 1; 2 -> 3; 3 -> 7; 4 -> 30; 5 -> 90; 6 -> 365; 7 -> 36500; else -> 0
+                    }
+                )
+
             },
             onDismiss = { updateModeDialog = false }
         )
@@ -259,24 +279,27 @@ fun SettingsTabContent() {
             title = "输入源URL",
             hint = "源列表配置URL",
             onConfirm = {
-                appPre.sourceUrl = it
-                currentSource = it
-//                Toast.makeText(context, "更换成功", Toast.LENGTH_SHORT).show()
-                Api.getSourceJson(context, it, {
-                    Toast.makeText(context, "更换成功", Toast.LENGTH_SHORT).show()
-
-                })
+                viewModel.changeSource(it)
+//                viewModel.updateSourceUrl(it)
+//                LaunchedEffect(Unit) {
+//                    viewModel.fetchSources(it).onSuccess {
+//                        Toast.makeText(context, "更换成功", Toast.LENGTH_SHORT).show()
+//                    }
+//                }
             },
             onNeutral = {
-                // 把这里写一个常量
-                appPre.sourceUrl = "https://www.gubaiovo.com/jnu-exam/source_list.json"
-                currentSource = it
-                Api.getSourceJson(context, "https://www.gubaiovo.com/jnu-exam/source_list.json", {
-                    Toast.makeText(context, "已恢复默认", Toast.LENGTH_SHORT).show()
-                })
+                viewModel.resetSourceToDefault()
 
-//                Toast.makeText(context, "已恢复默认", Toast.LENGTH_SHORT).show()
-
+//                // 把这里写一个常量
+//                viewModel.updateRepoUrl("https://www.gubaiovo.com/jnu-exam/source_list.json")
+//                viewModel.updateSourceUrl(it)
+//                LaunchedEffect(Unit) {
+//                    viewModel.fetchSources("https://www.gubaiovo.com/jnu-exam/source_list.json")
+//                        .onSuccess {
+//                            Toast.makeText(context, "已恢复默认", Toast.LENGTH_SHORT).show()
+//
+//                        }
+//                }
             },
             onDismiss = { sourceModeDialog = false }
         )

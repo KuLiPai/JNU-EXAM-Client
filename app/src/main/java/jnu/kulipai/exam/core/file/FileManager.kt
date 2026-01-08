@@ -1,7 +1,8 @@
 package jnu.kulipai.exam.core.file
 
 import android.content.Context
-import jnu.kulipai.exam.data.datastore.AppPreferences
+import jnu.kulipai.exam.core.common.d
+import jnu.kulipai.exam.data.model.DirContent
 import jnu.kulipai.exam.data.model.DirNode
 import jnu.kulipai.exam.data.model.FileItem
 import org.json.JSONObject
@@ -28,14 +29,14 @@ class FileManager(private val context: Context) {
         context.deleteFile(filename)
     }
 
-    // ✅ 判断内部文件是否存在
+    // 判断内部文件是否存在
     fun exists(filename: String, isExternal: Boolean = false): Boolean {
         val parent = if (isExternal) context.getExternalFilesDir("") else context.filesDir
         val file = File(parent, filename)
         return file.exists()
     }
 
-    fun buildDirectoryTree(json: String,appPreferences: AppPreferences): DirNode {
+    fun buildDirectoryTree(json: String,repo: String): DirNode {
         val root = DirNode(name = "/", path = "/")
         val jsonObject = JSONObject(json)
         val dirsArray = jsonObject.getJSONArray("dirs")
@@ -67,10 +68,7 @@ class FileManager(private val context: Context) {
                         name = fileObj.getString("name"),
                         path = fileObj.getString("path"),
                         size = fileObj.getLong("size"),
-                        url = fileObj.getString(appPreferences.repoKey)
-//                        github_raw_url = fileObj.getString("github_raw_url"),
-//                        gitee_raw_url = fileObj.getString("gitee_raw_url"),
-//                        cf_url = fileObj.getString("cf_url")
+                        url = fileObj.getString(repo)
                     )
                 )
             }
@@ -78,11 +76,6 @@ class FileManager(private val context: Context) {
 
         return root
     }
-
-    data class DirContent(
-        val files: List<FileItem>,
-        val subDirs: List<DirNode>
-    )
 
     fun getDirContent(root: DirNode, targetPath: String): DirContent? {
         val normalizedPath = targetPath.trim('/').takeIf { it.isNotEmpty() } ?: "/"
@@ -95,6 +88,7 @@ class FileManager(private val context: Context) {
         }
         return DirContent(currentNode.files, currentNode.children.values.toList())
     }
+
 
     /**
      * 递归搜索文件和文件夹名称中包含查询字符串的文件。

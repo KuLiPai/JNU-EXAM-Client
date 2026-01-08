@@ -12,15 +12,20 @@ import jnu.kulipai.exam.ui.screens.welcome.WelcomeViewModel
 import jnu.kulipai.exam.data.datastore.ThemeSettingsManager
 import jnu.kulipai.exam.core.file.FileManager
 import jnu.kulipai.exam.core.network.ApiClient
+import jnu.kulipai.exam.core.network.DownloadDataSource
+import jnu.kulipai.exam.core.network.NetworkDataSource
 import jnu.kulipai.exam.data.repository.SourceRepository
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
+import kotlin.math.sign
 
-//
-//// Koin的module
-//// 优雅简洁又强大
-//// 需要什么参数直接get()，自动找需要的参数填进去
-//// 美妙
+/*
+// Koin的module
+// 优雅简洁又强大
+// 需要什么参数直接get()，自动找需要的参数填进去
+// 美妙
+ */
+
 
 // 网络模块
 val networkModule = module {
@@ -30,9 +35,14 @@ val networkModule = module {
 // ViewModel 模块
 val viewModelModule = module {
     viewModel { MainActivityViewModel(get(), get(),get()) }
-    viewModel { HomeViewModel(get(), get(), get(), get()) }
+    viewModel { HomeViewModel(get(), get(), get(), get(),get(),get(),get()) }
     viewModel { SettingsAppearanceViewModel(get()) }
     viewModel { WelcomeViewModel(get(),get(),get()) }
+}
+
+val core = module {
+    single { NetworkDataSource(get()) }
+    single { DownloadDataSource(get(),get()) }
 }
 
 // App 主模块
@@ -62,6 +72,8 @@ val appModule = module {
     includes(networkModule)
 
     includes(viewModelModule)
+
+    includes(core)
 }
 
 

@@ -19,12 +19,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Done
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -57,6 +55,7 @@ import com.github.compose.waveloading.WaveLoading
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import jnu.kulipai.exam.R
 import jnu.kulipai.exam.data.model.SourceItem
+import jnu.kulipai.exam.data.model.SourceMapper.fromJson
 import jnu.kulipai.exam.ui.anim.SlideAnimationScreen
 import jnu.kulipai.exam.ui.screens.home.MainScreen
 import org.koin.androidx.compose.koinViewModel
@@ -83,7 +82,6 @@ var three_containerColor = Color(0xffffdbd1)
 
 var chipcolor = Color(0xffffdbd1)
 var chipborderColor = Color(0xffd8c2bc)
-
 
 
 // 路由WelcomeScreen页面
@@ -137,7 +135,6 @@ class OneScreen(
     private val viewModel: WelcomeViewModel
 ) : Screen, SlideAnimationScreen {
 
-    @OptIn(ExperimentalMaterial3ExpressiveApi::class)
     @Composable
     override fun Content() {
 
@@ -180,10 +177,10 @@ class OneScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         //全新加载变形等待
-                        LoadingIndicator(
-                            color = one_contentColor,
-                            modifier = Modifier.size(24.dp),
-                        )
+//                        LoadingIndicator(
+//                            color = one_contentColor,
+//                            modifier = Modifier.size(24.dp),
+//                        )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text("Next")
                     }
@@ -194,7 +191,7 @@ class OneScreen(
 }
 
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3ExpressiveApi::class)
+//@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3ExpressiveApi::class)
 class TwoScreen(
     private val viewModel: WelcomeViewModel
 ) : Screen, SlideAnimationScreen {
@@ -251,7 +248,7 @@ class TwoScreen(
                     modifier = Modifier.padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    LoadingIndicator(color = two_contentColor, modifier = Modifier.size(24.dp))
+//                    LoadingIndicator(color = two_contentColor, modifier = Modifier.size(24.dp))
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Next")
                 }
@@ -261,7 +258,7 @@ class TwoScreen(
 }
 
 // 为 ThreeScreen 添加 onFinish 回调
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+//@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 class ThreeScreen(
     private val viewModel: WelcomeViewModel
 ) : Screen, SlideAnimationScreen {
@@ -355,7 +352,7 @@ class ThreeScreen(
                     }
 
                 } else {
-                    sources = Api.parseSources(repository!!)
+                    sources = fromJson(repository!!)
                     FlowRow(
                         modifier = Modifier
                             .align(Alignment.Center)
@@ -411,11 +408,10 @@ class ThreeScreen(
                 onClick = {
                     if (selectedItem != null) {
                         sources?.let {
-
-                            viewModel.appPre.repo = selectedItem?.name.toString()
-                            viewModel.appPre.repoUrl = selectedItem?.jsonUrl.toString()
-                            viewModel.appPre.repoKey = selectedItem?.fileKey.toString()
-                            viewModel.appPre.isFirstLaunch = false
+                            viewModel.updateRepoUrl(selectedItem?.jsonUrl.toString())
+                            viewModel.updateRepoKey(selectedItem?.fileKey.toString())
+                            viewModel.updateRepo(selectedItem?.name.toString())
+                            viewModel.updateIsFirstLaunch(false)
                             navigator.replaceAll(MainScreen())
                         }
                     } else {
@@ -424,7 +420,8 @@ class ThreeScreen(
 
                         } else {
                             viewModel.getSourceJson(sourceText)
-                            viewModel.appPre.sourceUrl = sourceText
+                            viewModel.updateSourceUrl(sourceText)
+
 
 //                            appPre.repo = selectedItem?.name.toString()
 //                            appPre.repoUrl = selectedItem?.jsonUrl.toString()
@@ -440,12 +437,12 @@ class ThreeScreen(
                     modifier = Modifier.padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    LoadingIndicator(
-                        color = three_contentColor,
-                        modifier = Modifier
-                            .width(24.dp)
-                            .height(24.dp),
-                    )
+//                    LoadingIndicator(
+//                        color = three_contentColor,
+//                        modifier = Modifier
+//                            .width(24.dp)
+//                            .height(24.dp),
+//                    )
                     Spacer(modifier = Modifier.width(8.dp))
                     if (repository.isNullOrEmpty()) {
                         Text("加载源")

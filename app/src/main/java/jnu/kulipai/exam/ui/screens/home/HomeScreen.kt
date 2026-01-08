@@ -39,7 +39,6 @@ import androidx.compose.ui.draw.paint
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -52,11 +51,11 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import cafe.adriel.voyager.navigator.tab.TabNavigator
 import com.kyant.backdrop.backdrops.layerBackdrop
 import com.kyant.backdrop.backdrops.rememberLayerBackdrop
+import jnu.kulipai.exam.data.model.MaskAnimActive
+import jnu.kulipai.exam.ui.anim.ScreenshotThemeTransition
 import jnu.kulipai.exam.ui.components.HomeTopBar
 import jnu.kulipai.exam.ui.components.LiquidBottomTab
 import jnu.kulipai.exam.ui.components.LiquidBottomTabs
-import jnu.kulipai.exam.data.model.MaskAnimActive
-import jnu.kulipai.exam.ui.anim.ScreenshotThemeTransition
 import org.koin.androidx.compose.koinViewModel
 
 class MainScreen : Screen {
@@ -68,7 +67,6 @@ class MainScreen : Screen {
 
         val viewModel: HomeViewModel = koinViewModel()
 
-        val context = LocalContext.current
 
 
         // 创建一个用于导出文件的回调
@@ -86,12 +84,6 @@ class MainScreen : Screen {
         LaunchedEffect(Unit) {
             viewModel.setExportLauncher(createDocumentLauncher)
         }
-
-
-        // 这个好乱，我问ai怎么优化代码，他让我再写一个类就写一个配置一行代码，我说能不能写进viewModel
-        // ai说x，要写进一个新文件，
-        // 我说f**k(
-        // 已经优化掉了，当我没说
 
 
         val darkTheme by viewModel.darkTheme.collectAsStateWithLifecycle(0)

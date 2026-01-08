@@ -89,7 +89,7 @@ fun InputDialog(
     initialValue: String = "",
     hint: String = "",
     onConfirm: (String) -> Unit,
-    onNeutral: (String) -> Unit,
+    onNeutral:  (String) -> Unit,
     onDismiss: () -> Unit
 ) {
     // 1. 管理输入框的状态

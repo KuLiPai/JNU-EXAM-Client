@@ -11,7 +11,11 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import jnu.kulipai.exam.core.common.d
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 //封装就封装，第一次封装Preferences，感觉完全不用吧
@@ -23,7 +27,7 @@ class AppPreferences(
 ) {
 
     private val Context.createDataStore: DataStore<Preferences> by
-    preferencesDataStore(name = "conf")
+    preferencesDataStore(name = "app_conf")
 
     private val dataStore = context.createDataStore
 
@@ -41,10 +45,18 @@ class AppPreferences(
     /* ===================== First Launch ===================== */
 
     suspend fun setFirstLaunch(value: Boolean) {
-        dataStore.edit { it[firstLaunchKey] = value }
+        "123123".d()
+        value.d()
+
+        dataStore.edit {
+
+            it[firstLaunchKey] = value
+        }
+        value.d()
+
     }
 
-    val isFirstLaunch: Flow<Boolean> = dataStore.data.map {
+    val firstLaunch: Flow<Boolean> = dataStore.data.map {
         it[firstLaunchKey] ?: true
     }
 

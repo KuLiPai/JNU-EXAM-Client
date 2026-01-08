@@ -7,16 +7,14 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.transitions.ScreenTransition
 import com.materialkolor.PaletteStyle
@@ -39,8 +37,6 @@ import org.koin.androidx.compose.koinViewModel
 // 拜拜hilt，你好Koin
 
 
-
-
 class MainActivity : ComponentActivity() {
 
     @OptIn(DelicateCoroutinesApi::class)
@@ -49,26 +45,18 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setContent {
-//            val navController = rememberNavController()
-
-
             val viewModel: MainActivityViewModel = koinViewModel()
 
             LaunchedEffect(Unit) {
                 viewModel.updateSourceFile()
-//                Api.getSourceJson(this@MainActivity, viewModel.appPre.sourceUrl)
             }
 
-            /// 哈哈，没事就是笑笑
             val dynamicColors by viewModel.dc.collectAsStateWithLifecycle(isSystemInDarkTheme())
             val darkTheme by viewModel.darkTheme.collectAsStateWithLifecycle(0)
             val amoledBlack by viewModel.amoledBlack.collectAsStateWithLifecycle(false)
-//            val firstLaunch by mainViewModel.firstLaunch.collectAsStateWithLifecycle(false)
-            val colorSeed by viewModel.colorSeed.collectAsStateWithLifecycle(initialValue = Color.Companion.Red)
+            val firstLaunch by viewModel.firstLaunch.collectAsStateWithLifecycle(null)
+            val colorSeed by viewModel.colorSeed.collectAsStateWithLifecycle(initialValue = Color.Red)
             val paletteStyle by viewModel.paletteStyle.collectAsStateWithLifecycle(initialValue = PaletteStyle.TonalSpot)
-//            val autoUpdateChannel by mainViewModel.autoUpdateChannel.collectAsStateWithLifecycle(UpdateChannel.Disabled)
-//            val updateDismissedName by mainViewModel.updateDismissedName.collectAsStateWithLifecycle("")
-
 
             //全局主题
             期末无挂Theme(
@@ -82,65 +70,40 @@ class MainActivity : ComponentActivity() {
                 colorSeed = colorSeed,
                 paletteStyle = paletteStyle
             ) {
-                // 跳转动画防止白/黑边
-                // 应该有更优雅的解决方案，累了，明天看看吧
                 Box(
-                    modifier = Modifier.Companion
+                    modifier = Modifier
                         .fillMaxSize()
                         .background(
                             MaterialTheme.colorScheme.background
                         )
                 ) {
-                    // 使用 a mutableState 来控制显示欢迎页还是主页
-                    val showWelcomeScreen =
-                        remember { mutableStateOf(viewModel.appPre.isFirstLaunch) }
-                    var screen: Screen = WelcomeScreen()
-                    if (!showWelcomeScreen.value) {
-                        screen = MainScreen()
-//                        WelcomeApp(
-//                            //忘了写路由了，只能简单的finish一下，一下子就没有动画了
-//                            onFinish = {
-//                                // 当引导流程结束时，更新 SharedPreferences 并切换到主页
-//                                mainViewModel.appPre.isFirstLaunch = false
-//                                showWelcomeScreen.value = false
-//                            },
-//                            mainViewModel.appPre
-//                        )
+
+                    val screen = when (firstLaunch) {
+                        null -> null          // 还没加载完
+                        true -> WelcomeScreen()
+                        false -> MainScreen()
                     }
-                    Navigator(screen) { navigator ->
-                        ScreenTransition(
-                            navigator = navigator,
-                            // 只需要这一行调用
-                            transition = {
-                                AppTransition.animate(
-                                    navigator,
-                                    targetState,
-                                    initialState
-                                )
-                            }
-                        )
+
+                    if (screen != null) {
+                        Navigator(screen) { navigator ->
+                            ScreenTransition(
+                                navigator = navigator,
+                                transition = {
+                                    AppTransition.animate(
+                                        navigator,
+                                        targetState,
+                                        initialState
+                                    )
+                                }
+                            )
+                        }
+                    } else {
+                        Spacer(Modifier)
                     }
+
+
                 }
             }
         }
-
-        //拦截返回，细节但很实用，（可能不算细节）
-        //有bug，如果用户退出在打开，就无法拦截了
-        //todo 加那个第一次启动监听，或者其他方法
-        //7.18号，看不懂to do在说什么，而且发现功能失效了，无语了
-        //7.18感谢ai，竟然之前悄悄的在我homeViewModel里加了方法
-//        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
-//            override fun handleOnBackPressed() {
-//                if (homeViewModel.currentPath.value != "/") {
-//                    homeViewModel.handleBackPress()
-//                } else {
-//                    isEnabled = false // 禁用当前的 OnBackPressedCallback
-//                    onBackPressedDispatcher.onBackPressed() // 触发默认的返回行为
-//                }
-//            }
-//        })
-
-
     }
-
 }

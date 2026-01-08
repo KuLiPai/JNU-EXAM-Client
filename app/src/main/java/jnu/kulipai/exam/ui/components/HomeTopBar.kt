@@ -163,13 +163,13 @@ fun HomeTopBar(
             onValueChange = { newText ->
                 homeViewModel.setSearchText(newText)
                 homeViewModel.setLoadingState(LoadingState.Loading)
-                homeViewModel.setisSearch(false)
+//                homeViewModel.setIsSearch(false)
 
                 searchJob?.cancel()
                 searchJob = CoroutineScope(Dispatchers.Main).launch {
                     if (newText.isNotEmpty()) {
                         delay(300) // 延迟300ms
-                        homeViewModel.setisSearch(true)
+//                        homeViewModel.setIsSearch(true)
                         homeViewModel.setLoadingState(LoadingState.Loaded)
 
                     }

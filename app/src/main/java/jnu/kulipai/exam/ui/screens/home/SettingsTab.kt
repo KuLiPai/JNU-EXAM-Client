@@ -11,6 +11,7 @@ import jnu.kulipai.exam.ui.screens.setting.SettingsTabContent
 
 
 object SettingsTab : Tab {
+    private fun readResolve(): Any = SettingsTab
 
     // 2. 定义底栏的标题和图标
     override val options: TabOptions
