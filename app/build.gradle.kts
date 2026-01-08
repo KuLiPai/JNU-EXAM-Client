@@ -3,7 +3,6 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
-//    alias(libs.plugins.hilt)
     alias(libs.plugins.aboutLibraries)
 
 }
@@ -95,18 +94,19 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     // boom,神奇的库，用于自动更新其他的库好像，不会用:3
     implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.ui)
-    implementation(libs.androidx.ui.graphics)
-    implementation(libs.androidx.ui.tooling.preview)
-    // m3 i like
-    implementation(libs.androidx.material3)
-    implementation(libs.androidx.compose.material3)
+
+    // compose
+    implementation(libs.bundles.compose)
+
 
     testImplementation(libs.junit)
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+
+
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
+    androidTestImplementation(libs.androidx.ui.tooling.preview)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 
@@ -126,12 +126,6 @@ dependencies {
     // kmp的pdf预览，上面那个会复制文件，乱死了
     implementation(libs.compose.pdf)
 
-    // destinations自动路由，路由器（
-    //wowwowow 太好用了吧，看文档晕晕的，用下来也太爽了，只能说无敌
-    // 12.12 突然用起来没那么方便了，不知道为什么，总之我曾经用过，
-    // 当时用的时候直接用的最新办，官方大概api，一个ai都写不对，影视看文档写出来了
-    // h
-
     // kolor!!
     implementation(libs.materialKolor)
 
@@ -143,43 +137,18 @@ dependencies {
     implementation(libs.aboutlibraries.core)
     implementation(libs.aboutlibraries.compose.m3)
 
-
     // Koin BOM
     // 轻量而kotlin友好的现代方便易懂简单的注入
     implementation(platform(libs.koin.bom))
-
-    // Koin Core
-    implementation(libs.koin.core)
-    implementation(libs.koin.android)
-
-    // Koin Compose
-    implementation(libs.koin.androidx.compose)
+    implementation(libs.bundles.koin)
 
     // Ktor，现代轻量而kotlin友好的网络库
-    implementation(libs.ktor.client.core)
-    implementation(libs.ktor.client.cio)
-    implementation(libs.ktor.client.logging)
-    implementation(libs.ktor.client.content.negotiation)
-    implementation(libs.ktor.serialization.kotlinx.json)
-
+    implementation(libs.bundles.ktor)
 
     //kyant超绝液态玻璃!!!
-    implementation(libs.backdrop)
-    // 你可能听说过G3圆角G4圆角，但是这可是G8圆角!!
-    implementation(libs.capsule)
+    implementation(libs.bundles.liquid.glass)
 
     // voyager 不依赖ksp的路由，或许以后能升级KMP。
-    // Navigator 核心
-    implementation(libs.voyager.navigator)
-    // ScreenModel（可选，用于每个 Screen 有自己的状态/ViewModel）
-    implementation(libs.voyager.screenmodel)
-    // BottomSheetNavigator（可选，如果你需要底部弹窗导航）
-    implementation(libs.voyager.bottom.sheet.navigator)
-    // TabNavigator（可选，如果你有 Tab 页面）
-    implementation(libs.voyager.tab.navigator)
-    // Transitions（可选，页面切换动画）
-    implementation(libs.voyager.transitions)
-    // Koin 集成（必须，如果你用 Koin 注入 ViewModel / Screen）
-    implementation(libs.voyager.koin)
+    implementation(libs.bundles.voyager)
 }
 

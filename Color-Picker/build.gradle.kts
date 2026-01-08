@@ -42,7 +42,7 @@ dependencies {
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.appcompat)
-    implementation(libs.material)
+//    implementation(libs.material)
     implementation(libs.androidx.ui)
     implementation(libs.foundation.android)
     testImplementation(libs.junit)
