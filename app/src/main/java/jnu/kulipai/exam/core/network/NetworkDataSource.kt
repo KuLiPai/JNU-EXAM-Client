@@ -3,6 +3,7 @@ package jnu.kulipai.exam.core.network
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsText
+import jnu.kulipai.exam.core.common.d
 
 class NetworkDataSource(
     private val client: HttpClient

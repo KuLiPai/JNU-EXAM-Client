@@ -18,7 +18,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Done
+import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FloatingActionButton
@@ -181,6 +183,8 @@ class OneScreen(
 //                            color = one_contentColor,
 //                            modifier = Modifier.size(24.dp),
 //                        )
+                        Icon(Icons.AutoMirrored.Filled.Send,
+                            contentDescription = null)
                         Spacer(modifier = Modifier.width(8.dp))
                         Text("Next")
                     }
@@ -248,6 +252,8 @@ class TwoScreen(
                     modifier = Modifier.padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    Icon(Icons.AutoMirrored.Filled.Send,
+                        contentDescription = null)
 //                    LoadingIndicator(color = two_contentColor, modifier = Modifier.size(24.dp))
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Next")
@@ -443,6 +449,8 @@ class ThreeScreen(
 //                            .width(24.dp)
 //                            .height(24.dp),
 //                    )
+                    Icon(Icons.Default.Done,
+                        contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
                     if (repository.isNullOrEmpty()) {
                         Text("加载源")

@@ -1,11 +1,13 @@
 package jnu.kulipai.exam.data.repository
 
+import jnu.kulipai.exam.core.common.d
 import jnu.kulipai.exam.core.common.isBlankJson
 import jnu.kulipai.exam.core.file.FileManager
 import jnu.kulipai.exam.core.network.NetworkDataSource
 import jnu.kulipai.exam.data.datastore.AppPreferences
 import jnu.kulipai.exam.data.model.DirectoryError
 import jnu.kulipai.exam.data.model.DirectoryResult
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 
 open class FileRepository(
@@ -21,7 +23,7 @@ open class FileRepository(
             if (fileManager.exists(cachePath)) {
                 fileManager.read(cachePath)
             } else {
-                val text = network.getText(appPreferences.repoUrl.first())
+                val text = network.getText(appPreferences.repoUrl.filter { it.isNotBlank() } .first())
                     .getOrElse { return DirectoryResult.Error(DirectoryError.NetworkFailed) }
 
                 if (text.isBlankJson()) {

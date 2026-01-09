@@ -2,6 +2,7 @@ package jnu.kulipai.exam.ui.screens.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import jnu.kulipai.exam.core.common.d
 import jnu.kulipai.exam.core.file.FileManager
 import jnu.kulipai.exam.core.file.PathUtil
 import jnu.kulipai.exam.core.network.DownloadDataSource
@@ -113,7 +114,7 @@ class HomeViewModel(
     ) {
         viewModelScope.launch {
             updateSourceUrl(sourceUrl)
-            updateRepoUrl(sourceUrl)
+//            updateRepoUrl(sourceUrl)
 
             fetchSources(sourceUrl)
                 .onSuccess {
