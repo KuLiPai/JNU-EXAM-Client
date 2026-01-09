@@ -37,7 +37,7 @@ import cafe.adriel.voyager.navigator.tab.Tab
 import cafe.adriel.voyager.navigator.tab.TabOptions
 import jnu.kulipai.exam.R
 import jnu.kulipai.exam.ui.screens.pdf.PdfScreen
-import jnu.kulipai.exam.util.Cache
+
 import org.koin.androidx.compose.koinViewModel
 import java.io.File
 import java.text.SimpleDateFormat
@@ -69,9 +69,7 @@ object ManagerTab : Tab {
         FileManagerScreen(
             viewModel,
             onPdfPreview = { file ->
-                Cache.currentFile = file
-                Cache.currentName = file.name
-                navigator.push(PdfScreen())
+                navigator.push(PdfScreen(file.path,file.name))
             }
         )
     }

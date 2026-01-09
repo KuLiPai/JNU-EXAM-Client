@@ -1,20 +1,10 @@
 package jnu.kulipai.exam.ui.screens.home
 
-import android.app.Application
-import android.content.Intent
-import android.net.Uri
-import android.webkit.MimeTypeMap
-import android.widget.Toast
-import androidx.activity.result.ActivityResultLauncher
-import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import jnu.kulipai.exam.core.common.d
 import jnu.kulipai.exam.core.file.FileManager
 import jnu.kulipai.exam.core.file.PathUtil
 import jnu.kulipai.exam.core.network.DownloadDataSource
-import jnu.kulipai.exam.data.datastore.AppPreferences
-import jnu.kulipai.exam.data.datastore.ThemeSettingsManager
 import jnu.kulipai.exam.data.model.ChangeSourceEvent
 import jnu.kulipai.exam.data.model.DirNode
 import jnu.kulipai.exam.data.model.DirectoryResult
@@ -23,7 +13,9 @@ import jnu.kulipai.exam.data.model.FileItem
 import jnu.kulipai.exam.data.model.LoadingState
 import jnu.kulipai.exam.data.model.SourceItem
 import jnu.kulipai.exam.data.repository.FileRepository
+import jnu.kulipai.exam.data.repository.SettingsRepository
 import jnu.kulipai.exam.data.repository.SourceRepository
+import jnu.kulipai.exam.platform.PlatformService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -33,73 +25,68 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.io.File
-import java.io.FileInputStream
-import java.io.OutputStream
 
 //哇好像很方便，在一个地方统一管理需要context的函数
 //用流来管理全局变量，神奇的感觉:))))))
 // TODO)) 只注入Repository
 class HomeViewModel(
     private val fileRepository: FileRepository,
-    private val appPreferences: AppPreferences,
-    private val application: Application,
-    private val themeSettingsManager: ThemeSettingsManager,
+    private val settingsRepository: SettingsRepository,
+    private val platformService: PlatformService,
     private val downloadDataSource: DownloadDataSource,
     private val sourceRepository: SourceRepository,
     private val fileManager: FileManager,
 
     ) : ViewModel() {
 
-    var repo = appPreferences.repo
-    val sourceUrl = appPreferences.sourceUrl
-    val update = appPreferences.update
-    val cooldown = appPreferences.cooldown
-    val repoKey = appPreferences.repoKeyFlow
-    val repoUrl = appPreferences.repoUrl
-    val day = appPreferences.day
+    var repo = settingsRepository.repo
+    val sourceUrl = settingsRepository.sourceUrl
+    val update = settingsRepository.update
+    val cooldown = settingsRepository.cooldown
+    val day = settingsRepository.day
 
     fun updateSourceUrl(value: String) {
         viewModelScope.launch {
-            appPreferences.setSourceUrl(value)
+            settingsRepository.setSourceUrl(value)
         }
     }
 
 
     fun updateUpdate(value: Int) {
         viewModelScope.launch {
-            appPreferences.setUpdate(value)
+            settingsRepository.setUpdate(value)
         }
     }
 
 
     fun updateCooldown(value: Long) {
         viewModelScope.launch {
-            appPreferences.setCooldown(value)
+            settingsRepository.setCooldown(value)
         }
     }
 
 
     fun updateRepo(value: String) {
         viewModelScope.launch {
-            appPreferences.setRepo(value)
+            settingsRepository.setRepo(value)
         }
     }
 
     fun updateDay(value: Long) {
         viewModelScope.launch {
-            appPreferences.setDay(value)
+            settingsRepository.setDay(value)
         }
     }
 
     fun updateRepoKey(value: String) {
         viewModelScope.launch {
-            appPreferences.setRepoKey(value)
+            settingsRepository.setRepoKey(value)
         }
     }
 
     fun updateRepoUrl(value: String) {
         viewModelScope.launch {
-            appPreferences.setRepoUrl(value)
+            settingsRepository.setRepoUrl(value)
         }
     }
 
@@ -148,21 +135,15 @@ class HomeViewModel(
         return sourceRepository.fetchSources(url)
     }
 
-    val darkTheme = themeSettingsManager.darkTheme
+    val darkTheme = settingsRepository.darkTheme
 
     fun updateDarkTheme(value: Int) =
         viewModelScope.launch(Dispatchers.IO) {
-            themeSettingsManager.setDarkTheme(value)
+            settingsRepository.setDarkTheme(value)
         }
 
 
-    private var exportLauncher: ActivityResultLauncher<String>? = null
-    fun setExportLauncher(arl: ActivityResultLauncher<String>) {
-        exportLauncher = arl
-    }
-
-
-//    private var _isSearch = MutableStateFlow(false)
+    //    private var _isSearch = MutableStateFlow(false)
 //    var isSearch = _isSearch.asStateFlow()
 //
 //    fun setIsSearch(bool: Boolean) {
@@ -230,19 +211,18 @@ class HomeViewModel(
             try {
                 when (val result = fileRepository.getDirectoryTree()) {
                     is DirectoryResult.Error -> {
-                        Toast.makeText(application, "网络异常", Toast.LENGTH_SHORT).show()
+                        platformService.showToast("网络异常")
                         _loadingState.value = LoadingState.Err
                     }
 
                     is DirectoryResult.Success -> {
-                        "123".d()
                         navigateTo("")
                         _root.value = result.tree
                         _loadingState.value = LoadingState.Loaded
                     }
                 }
             } catch (e: Exception) {
-                Toast.makeText(application, "加载失败: ${e.message}", Toast.LENGTH_SHORT).show()
+                platformService.showToast("加载失败: ${e.message}")
                 _loadingState.value = LoadingState.Err // 加载失败时进入错误状态
             }
         }
@@ -296,12 +276,31 @@ class HomeViewModel(
         viewModelScope.launch {
             _loadingState.value = LoadingState.Loading
             try {
-                File(application.filesDir, "cache.json").delete()
+                // fileRepository.clearCache() // Ideal: add clearCache to interface, or rely on impl details if needed, but here we just used to delete file directly.
+                // Since removing direct file access, let's assume we can re-fetch or we need a clearCache mehod.
+                // For now, in FileRepositoryImpl logic, if we call it again, it might use cache?
+                // The original code was: File(application.filesDir, "cache.json").delete()
+                // We should add clearCache to FileRepository or just direct FileManager.
+                // Let's rely on standard logic or add clearCache later.
+                // Actually, let's just use fileManager via Platform/Repository if exposed, or add clearCache to Repo interface.
+                // To keep it simple and consistent with previous "trick", we might need to expose a clear logic.
+                // For this refactor, I will add a clear function to FileRepositoryImpl or FileManager usage if possible.
+                // BUT, since we passed FileManager to ViewModel, we can still use it for non-android file ops?
+                // FileManager uses Context. So we should probably avoid direct FileManager usage if we want pure KMP ViewModel.
+                // But header says: private val fileManager: FileManager. FileManager is in core, does it have android deps? Yes context.
+                // So FileManager also needs refactoring for KMP. But step by step.
+                // For now, let's assume FileRepository has forceUpdate param or a clearCache method.
+                // I'll add `clearCache` to the interface later if needed or just skip explicit delete if Repo handles it on "force refresh".
+                // Original used: File(...).delete().
+                // Let's assume we just call getDirectoryTree again? No, it caches.
+
+                // Hack: We can ask FileManager to delete it if we still have access to it (we do).
+                fileManager.delete("cache.json")
 
                 // 这里直接调用 repository 的逻辑
                 when (val result = fileRepository.getDirectoryTree()) {
                     is DirectoryResult.Error -> {
-                        Toast.makeText(application, "网络异常", Toast.LENGTH_SHORT).show()
+                        platformService.showToast("网络异常")
 
                         _loadingState.value = LoadingState.Err
                     }
@@ -309,15 +308,15 @@ class HomeViewModel(
                     is DirectoryResult.Success -> {
                         _root.value = result.tree
                         _loadingState.value = LoadingState.Loaded
-                        appPreferences.setDay(System.currentTimeMillis())
+                        settingsRepository.setDay(System.currentTimeMillis())
                     }
                 }
                 // 假设 repository 有一个 forceUpdate 参数
 
 
-                Toast.makeText(application, "数据已更新！", Toast.LENGTH_SHORT).show()
+                platformService.showToast("数据已更新！")
             } catch (e: Exception) {
-                Toast.makeText(application, "更新失败: ${e.message}", Toast.LENGTH_SHORT).show()
+                platformService.showToast("更新失败: ${e.message}")
                 _loadingState.value = LoadingState.Loaded // 即使失败也要回到 Loaded 状态
                 callBack()
             }
@@ -336,7 +335,7 @@ class HomeViewModel(
             ).onSuccess {
                 downloadCallback(DownLoadState.Downloaded)
             }.onFailure {
-                Toast.makeText(application, "网络错误", Toast.LENGTH_SHORT).show()
+                platformService.showToast("网络错误")
                 downloadCallback(DownLoadState.Err)
             }
         }
@@ -344,56 +343,10 @@ class HomeViewModel(
 
 
     fun openFileWithOtherApp(relativePath: String = "", absolutePath: String = "") {
-        var file: File = File("")
-        if (absolutePath.isEmpty()) {
-            file = File(application.getExternalFilesDir(""), relativePath)
-        } else {
-            file = File(absolutePath)
-        }
-//        val file = File(application.getExternalFilesDir(""), relativePath)
-        if (!file.exists()) {
-            throw IllegalArgumentException("File does not exist: $relativePath")
-        }
-
-        val extension = file.extension.lowercase()
-        val fallbackMimeTypes = mapOf(
-            "md" to "text/plain",
-            "markdown" to "text/plain",
-            "lua" to "text/plain",
-            "log" to "text/plain",
-            "json" to "application/json",
-            "xml" to "text/xml",
-            "csv" to "text/csv"
-        )
-
-        val mimeType = MimeTypeMap.getSingleton()
-            .getMimeTypeFromExtension(extension)
-            ?: fallbackMimeTypes[extension]
-            ?: "application/octet-stream"
-
-        val uri: Uri = FileProvider.getUriForFile(
-            application,
-            "${application.packageName}.fileprovider",
-            file
-        )
-
-        val intent = Intent(Intent.ACTION_VIEW).apply {
-            setDataAndType(uri, mimeType)
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) // ✅ 必须加，因是 application context
-        }
-
-        val chooser = Intent.createChooser(intent, "选择应用打开文件").apply {
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) // ✅ Chooser 也加
-        }
-
         try {
-            application.startActivity(chooser)
+            platformService.openFile(relativePath, absolutePath)
         } catch (e: Exception) {
-            Toast.makeText(
-                application, "找不到应用打开此文件，路径: $relativePath，类型: $mimeType",
-                Toast.LENGTH_SHORT
-            ).show()
+            platformService.showToast("找不到应用打开此文件")
         }
     }
 //
@@ -408,86 +361,34 @@ class HomeViewModel(
     // 在 HomeViewModel 中
     fun prepareExport(path: String) {
         exportPath = path
-        val file = File(path)
-
-        // 1. 设置 MIME (这是为了解决后缀乱加的问题，结合上一条回答)
-        exportMime = guessMimeType(file.name)
-
-        // 2. 【关键修复】 这里必须要调用 launch，弹窗才会出来！
-        // 传入文件名作为建议名称
-        exportLauncher?.launch(file.name)
+        // Mime guessing moved to PlatformService or can be kept here if pure kotlin logic.
+        // But launcher is in PlatformService.
+        platformService.prepareExport(path) {
+            // Optional callback if needed
+        }
     }
 
-    fun exportFileToUri(targetUri: Uri) {
+    fun exportFileToUri(targetUriStr: String) { // Changed Uri to String to avoid Android dependency in VM signature if possible, but standard is Uri.
+        // For partial refactor, passing String uri might be better or keep Uri if use generic wrapper.
+        // But let's assume we pass string or wrapper. 
+        // Original: exportFileToUri(targetUri: Uri)
+        // Let's keep it clean: pass String or generic type.
+        // Actually, let's allow `Any` or specific platform wrapper? 
+        // For now, I'll use String for URI to be safe, caller converts.
+
         val path = exportPath ?: return
-        val file = File(application.getExternalFilesDir(""), path)
-        if (!file.exists()) {
-            Toast.makeText(application, "源文件不存在: $path", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        try {
-            val inputStream = FileInputStream(file)
-            val outputStream: OutputStream? =
-                application.contentResolver.openOutputStream(targetUri)
-
-            if (outputStream == null) {
-                Toast.makeText(application, "无法打开导出目标", Toast.LENGTH_SHORT).show()
-                return
+        platformService.exportFileToUri(path, targetUriStr)
+            .onSuccess {
+                platformService.showToast("文件已成功导出")
             }
-
-            inputStream.use { input ->
-                outputStream.use { output ->
-                    input.copyTo(output)
-                }
+            .onFailure { e ->
+                platformService.showToast("导出失败: ${e.message}")
             }
-
-            Toast.makeText(application, "文件已成功导出", Toast.LENGTH_SHORT).show()
-
-        } catch (e: Exception) {
-            e.printStackTrace()
-            Toast.makeText(application, "导出失败: ${e.message}", Toast.LENGTH_SHORT).show()
-        }
     }
 
-    // 在 HomeViewModel 中
-    private fun guessMimeType(fileName: String): String {
-        val ext = fileName.substringAfterLast('.', "").lowercase()
-        return when (ext) {
-            // 图片、视频、PDF 等为了方便用户在保存时能看到预览图，可以保留具体类型
-            "pdf" -> "application/pdf"
-            "jpg", "jpeg" -> "image/jpeg"
-            "png" -> "image/png"
-            "webp" -> "image/webp"
-            "mp4" -> "video/mp4"
-            "mp3" -> "audio/mpeg"
-            "apk" -> "application/vnd.android.package-archive"
 
-            // 【关键修改】
-            // 对于 md, json, lua, log, xml, gradle 等容易被系统自动加 .txt 的文件
-            // 全部统一返回 application/octet-stream
-            // 这样系统就会完全尊重你传入的 fileName，不会自动加后缀
-            "md", "json", "xml", "lua", "log", "gradle", "kts", "cpp", "c", "h", "java", "kt" -> "application/octet-stream"
-
-            // 甚至对于 txt，如果你也不想让系统干预，也可以设为 octet-stream
-            // 但保留 text/plain 给 .txt 通常是没问题的
-            "txt" -> "text/plain"
-
-            // 压缩包通常没问题，保持原样即可
-            "zip" -> "application/zip"
-            "rar" -> "application/vnd.rar"
-            "7z" -> "application/x-7z-compressed"
-
-            // Office 文档
-            "doc" -> "application/msword"
-            "docx" -> "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-            "xls" -> "application/vnd.ms-excel"
-            "xlsx" -> "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-
-            // 默认兜底
-            else -> "application/octet-stream"
-        }
+    fun getFileByPath(path: String): File {
+        return fileManager.getFileByPath(path)
     }
-
 
 }

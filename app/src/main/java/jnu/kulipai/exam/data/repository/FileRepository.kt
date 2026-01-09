@@ -1,22 +1,20 @@
 package jnu.kulipai.exam.data.repository
 
-import jnu.kulipai.exam.core.common.d
-import jnu.kulipai.exam.data.datastore.AppPreferences
 import jnu.kulipai.exam.core.common.isBlankJson
 import jnu.kulipai.exam.core.file.FileManager
 import jnu.kulipai.exam.core.network.NetworkDataSource
+import jnu.kulipai.exam.data.datastore.AppPreferences
 import jnu.kulipai.exam.data.model.DirectoryError
 import jnu.kulipai.exam.data.model.DirectoryResult
 import kotlinx.coroutines.flow.first
 
-
-class FileRepository(
+open class FileRepository(
     private val fileManager: FileManager,
     private val network: NetworkDataSource,
     private val appPreferences: AppPreferences
 ) {
 
-    suspend fun getDirectoryTree(): DirectoryResult {
+    open suspend fun getDirectoryTree(): DirectoryResult {
         val cachePath = "cache.json"
 
         val json = runCatching {
@@ -59,38 +57,4 @@ class FileRepository(
             DirectoryResult.Error(DirectoryError.BuildFailed)
         }
     }
-
-
-
-
 }
-
-
-
-//
-//class FileRepository(
-//    private val fileManager: FileManager,
-//    private val api: Api,
-//    private val appPreferences: AppPreferences // 注入 AppPreferences 以获取 repo 设置
-//) {
-//    suspend fun getDirectoryTree(context: Context): DirNode {
-//        // 检查缓存
-//        if (fileManager.exists(context, "cache.json")) {
-//            val json = fileManager.read(context, "cache.json")
-//            return fileManager.buildDirectoryTree(json.toString(), appPreferences)
-//        } else {
-//
-//            // 从网络获取
-//            val url = appPreferences.repoUrl
-//
-//
-//            val json = api.performGetRequest(url)
-//            if (json != "err") {
-//                fileManager.write(context, "cache.json", json)
-//                return fileManager.buildDirectoryTree(json, appPreferences)
-//            } else {
-//                throw Exception("Failed to fetch directory tree")
-//            }
-//        }
-//    }
-//}

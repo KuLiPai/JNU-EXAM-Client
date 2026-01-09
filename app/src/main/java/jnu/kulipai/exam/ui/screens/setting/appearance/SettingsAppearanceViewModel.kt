@@ -3,60 +3,62 @@ package jnu.kulipai.exam.ui.screens.setting.appearance
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import jnu.kulipai.exam.data.repository.SettingsRepository
 import jnu.kulipai.exam.data.datastore.ThemeSettingsManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 
 class SettingsAppearanceViewModel (
-    private val themeSettings: ThemeSettingsManager
+    private val settingsRepository: SettingsRepository
 ) : ViewModel() {
     val darkTheme by lazy {
-        themeSettings.darkTheme
+        settingsRepository.darkTheme
     }
 
     fun updateDarkTheme(value: Int) =
         viewModelScope.launch(Dispatchers.IO) {
-            themeSettings.setDarkTheme(value)
+            settingsRepository.setDarkTheme(value)
         }
 
     val dynamicColors by lazy {
-        themeSettings.dynamicColors
+        settingsRepository.dynamicColors
     }
 
     fun updateDynamicColors(enabled: Boolean) =
         viewModelScope.launch {
-            themeSettings.setDynamicColors(enabled)
+            settingsRepository.setDynamicColors(enabled)
         }
 
     val amoledBlack by lazy {
-        themeSettings.amoledBlack
+        settingsRepository.amoledBlack
     }
 
     fun updateAmoledBlack(enabled: Boolean) =
         viewModelScope.launch(Dispatchers.IO) {
-            themeSettings.setAmoledBlack(enabled)
+            settingsRepository.setAmoledBlack(enabled)
         }
 
 
 
-    val paletteStyle by lazy { themeSettings.themePaletteStyle }
+    val paletteStyle by lazy { settingsRepository.themePaletteStyle }
     fun updatePaletteStyle(index: Int) =
         viewModelScope.launch(Dispatchers.IO) {
-            themeSettings.setPaletteStyle(ThemeSettingsManager.paletteStyles[index].first)
+            // Need to access paletteStyles companion
+            settingsRepository.setPaletteStyle(ThemeSettingsManager.paletteStyles[index].first)
         }
 
-    val isUserDefinedSeedColor by lazy { themeSettings.isUserDefinedSeedColor }
+    val isUserDefinedSeedColor by lazy { settingsRepository.isUserDefinedSeedColor }
     fun updateIsUserDefinedSeedColor(value: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {
-            themeSettings.setIsUserDefinedSeedColor(value)
+            settingsRepository.setIsUserDefinedSeedColor(value)
         }
     }
 
-    val seedColor by lazy { themeSettings.themeColorSeed }
+    val seedColor by lazy { settingsRepository.themeColorSeed }
     fun updateCurrentSeedColor(seedColor: Color) {
         viewModelScope.launch(Dispatchers.IO) {
-            themeSettings.setCurrentThemeColor(seedColor)
+            settingsRepository.setCurrentThemeColor(seedColor)
         }
     }
 

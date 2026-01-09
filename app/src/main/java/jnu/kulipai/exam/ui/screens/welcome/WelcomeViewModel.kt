@@ -1,64 +1,60 @@
 package jnu.kulipai.exam.ui.screens.welcome
 
-import android.app.Application
-import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import jnu.kulipai.exam.core.common.d
-import jnu.kulipai.exam.data.datastore.AppPreferences
+import jnu.kulipai.exam.data.repository.SettingsRepository
 import jnu.kulipai.exam.data.repository.SourceRepository
+import jnu.kulipai.exam.platform.PlatformService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import kotlin.coroutines.cancellation.CancellationException
 
 
 class WelcomeViewModel(
     val sourceRepository: SourceRepository,
-    val application: Application, // 最好别context，内存问题，用application
-    val appPreferences: AppPreferences,
+    val platformService: PlatformService,
+    val settingsRepository: SettingsRepository,
 
     ) : ViewModel() {
 
 
-    val repo: Flow<String> = appPreferences.repo
-    val sourceUrl = appPreferences.sourceUrl
-    val update = appPreferences.update
-    val cooldown = appPreferences.cooldown
-    val repoKey = appPreferences.repoKeyFlow
-    val repoUrl = appPreferences.repoUrl
+    val repo: Flow<String> = settingsRepository.repo
+    val sourceUrl = settingsRepository.sourceUrl
+    val update = settingsRepository.update
+    val cooldown = settingsRepository.cooldown
+    val repoKey = settingsRepository.repoKeyFlow
 
     fun updateSourceUrl(value: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            appPreferences.setSourceUrl(value)
+            settingsRepository.setSourceUrl(value)
         }
     }
 
 
     fun updateRepo(value: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            appPreferences.setRepo(value)
+            settingsRepository.setRepo(value)
         }
     }
 
     fun updateRepoKey(value: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            appPreferences.setRepoKey(value)
+            settingsRepository.setRepoKey(value)
         }
     }
 
     fun updateIsFirstLaunch(value: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {
-            appPreferences.setFirstLaunch(value)
+            settingsRepository.setFirstLaunch(value)
         }
     }
 
 
     fun updateRepoUrl(value: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            appPreferences.setRepoUrl(value)
+            settingsRepository.setRepoUrl(value)
         }
     }
 
@@ -75,11 +71,10 @@ class WelcomeViewModel(
             sourceRepository.updateSourceFile(url).onSuccess {
                 _data.value = it.readText()
             }.onFailure {
-                Toast.makeText(application, "网络错误:(", Toast.LENGTH_SHORT).show()
+                platformService.showToast("网络错误:(")
             }
         }
     }
 
 
 }
-

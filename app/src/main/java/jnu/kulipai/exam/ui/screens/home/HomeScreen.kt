@@ -52,11 +52,14 @@ import cafe.adriel.voyager.navigator.tab.TabNavigator
 import com.kyant.backdrop.backdrops.layerBackdrop
 import com.kyant.backdrop.backdrops.rememberLayerBackdrop
 import jnu.kulipai.exam.data.model.MaskAnimActive
+import jnu.kulipai.exam.platform.PlatformService
+import jnu.kulipai.exam.platform.AndroidPlatformService
 import jnu.kulipai.exam.ui.anim.ScreenshotThemeTransition
 import jnu.kulipai.exam.ui.components.HomeTopBar
 import jnu.kulipai.exam.ui.components.LiquidBottomTab
 import jnu.kulipai.exam.ui.components.LiquidBottomTabs
 import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.getKoin
 
 class MainScreen : Screen {
 
@@ -76,13 +79,15 @@ class MainScreen : Screen {
         ) { uri ->
             // 3. 用户选完路径后的回调
             if (uri != null) {
-                viewModel.exportFileToUri(uri) // 调用 ViewModel 里的实际写入逻辑
+                // Modified: Export URI is handled by passing string uri
+                viewModel.exportFileToUri(uri.toString()) 
             }
         }
 
-        // 2. 将 Launcher 传递给 ViewModel (这一步非常重要，否则 vm 里的 exportLauncher 是 null)
+        // 2. 将 Launcher 传递给 AndroidPlatformService
+        val platformService: PlatformService = getKoin().get()
         LaunchedEffect(Unit) {
-            viewModel.setExportLauncher(createDocumentLauncher)
+            (platformService as? AndroidPlatformService)?.setExportLauncher(createDocumentLauncher)
         }
 
 

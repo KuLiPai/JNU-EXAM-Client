@@ -35,10 +35,10 @@ import jnu.kulipai.exam.data.model.MaskAnimActive
 import dev.zt64.compose.pdf.PdfState
 import dev.zt64.compose.pdf.component.PdfPage
 import dev.zt64.compose.pdf.rememberLocalPdfState
+import jnu.kulipai.exam.core.common.d
 import jnu.kulipai.exam.ui.components.ThemeToggleButton
 import jnu.kulipai.exam.ui.screens.home.HomeViewModel
 import jnu.kulipai.exam.ui.anim.ScreenshotThemeTransition
-import jnu.kulipai.exam.util.Cache
 import org.koin.androidx.compose.koinViewModel
 import java.io.File
 import kotlin.math.max
@@ -46,9 +46,13 @@ import kotlin.math.roundToInt
 
 
 @OptIn(ExperimentalMaterial3Api::class)
-class PdfScreen : Screen {
+class PdfScreen(
+    val pdfPath: String,
+    val pdfName: String
+) : Screen {
     @Composable
     override fun Content() {
+
 
 
         val viewModel: HomeViewModel = koinViewModel()
@@ -68,9 +72,11 @@ class PdfScreen : Screen {
             modifier = Modifier
         ) { startAnim ->
             PdfScaffold(
+                pdfName = pdfName,
+                pdfPath = pdfPath,
                 isDarkTheme = isDark,
                 isAnimating = isAnimating,
-                homeViewModel = viewModel,
+                viewModel = viewModel,
                 onThemeToggle = { animModel, x, y ->
 
                     val isExpand = isDark.value
@@ -96,8 +102,10 @@ class PdfScreen : Screen {
 fun PdfScaffold(
     isDarkTheme: MutableState<Boolean>,
     isAnimating: Boolean,
-    homeViewModel: HomeViewModel, // 接收 ViewModel
-    onThemeToggle: MaskAnimActive
+    viewModel: HomeViewModel, // 接收 ViewModel
+    onThemeToggle: MaskAnimActive,
+    pdfName: String,
+    pdfPath: String
 ) {
 
 
@@ -117,7 +125,7 @@ fun PdfScaffold(
 //    // 拦截系统返回
 //    BackHandler(enabled = shouldBlockBack) {
 //        // 你可以弹窗确认、执行某些操作等
-//        homeViewModel.handleBackPress()
+//        viewModel.handleBackPress()
 //    }
 
 
@@ -133,7 +141,7 @@ fun PdfScaffold(
 
                     TopAppBar(
                         title = {
-                            Text(Cache.currentName.substring(0, 7) + "...")
+                            Text(pdfName.take(7) + "...")
                         },
                         navigationIcon = {
                         },
@@ -143,7 +151,7 @@ fun PdfScaffold(
                             ThemeToggleButton(
                                 isAnimating = isAnimating,
                                 onThemeToggle = onThemeToggle,
-                                homeViewModel
+                                viewModel
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                         }
@@ -154,8 +162,8 @@ fun PdfScaffold(
         }
 
     ) { innerPadding ->
-        val currentFile = Cache.currentFile
-
+        val currentFile = viewModel.getFileByPath(pdfPath)
+        currentFile.d()
 
 
 

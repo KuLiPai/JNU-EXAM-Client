@@ -51,11 +51,10 @@ import jnu.kulipai.exam.data.model.FileItem
 import jnu.kulipai.exam.ui.screens.home.HomeViewModel
 import jnu.kulipai.exam.ui.screens.home.formatFileSize
 import jnu.kulipai.exam.ui.screens.pdf.PdfScreen
-import jnu.kulipai.exam.util.Cache
 import java.io.File
 
 
-//@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+
 @Composable
 fun FileCard(
     item: FileItem,
@@ -196,10 +195,8 @@ fun FileCard(
                             if (item.name.substringAfterLast(".") == "pdf" && downloadState == DownLoadState.Downloaded) {
                                 ElevatedButton(
                                     onClick = {
-                                        Cache.currentFile =
-                                            File(context.getExternalFilesDir(""), item.path)
-                                        Cache.currentName = item.name
-                                        navController.push(PdfScreen())
+
+                                        navController.push(PdfScreen(item.path,item.name))
                                     },
                                     contentPadding = PaddingValues(
                                         start = 16.dp,

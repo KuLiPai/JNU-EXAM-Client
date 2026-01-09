@@ -1,7 +1,6 @@
 package jnu.kulipai.exam.core.file
 
 import android.content.Context
-import jnu.kulipai.exam.core.common.d
 import jnu.kulipai.exam.data.model.DirContent
 import jnu.kulipai.exam.data.model.DirNode
 import jnu.kulipai.exam.data.model.FileItem
@@ -9,6 +8,14 @@ import org.json.JSONObject
 import java.io.File
 
 class FileManager(private val context: Context) {
+
+    fun getFileByPath(path: String): File {
+        if (path.startsWith("/storage/emulated/0")) {
+            return File(path)
+        }else {
+            return File(context.getExternalFilesDir(""), path)
+        }
+    }
 
     fun write(filename: String, content: String) {
         context.openFileOutput(filename, Context.MODE_PRIVATE).use { output ->

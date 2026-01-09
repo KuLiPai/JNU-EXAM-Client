@@ -3,21 +3,21 @@ package jnu.kulipai.exam.core.di
 
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
-import jnu.kulipai.exam.data.datastore.AppPreferences
 import jnu.kulipai.exam.app.MainActivityViewModel
-import jnu.kulipai.exam.data.repository.FileRepository
-import jnu.kulipai.exam.ui.screens.home.HomeViewModel
-import jnu.kulipai.exam.ui.screens.setting.appearance.SettingsAppearanceViewModel
-import jnu.kulipai.exam.ui.screens.welcome.WelcomeViewModel
-import jnu.kulipai.exam.data.datastore.ThemeSettingsManager
 import jnu.kulipai.exam.core.file.FileManager
 import jnu.kulipai.exam.core.network.ApiClient
 import jnu.kulipai.exam.core.network.DownloadDataSource
 import jnu.kulipai.exam.core.network.NetworkDataSource
-import jnu.kulipai.exam.data.repository.SourceRepository
+import jnu.kulipai.exam.data.datastore.AppPreferences
+import jnu.kulipai.exam.data.datastore.ThemeSettingsManager
+import jnu.kulipai.exam.data.repository.FileRepository
+import jnu.kulipai.exam.data.repository.SettingsRepository
+import jnu.kulipai.exam.platform.PlatformService
+import jnu.kulipai.exam.ui.screens.home.HomeViewModel
+import jnu.kulipai.exam.ui.screens.setting.appearance.SettingsAppearanceViewModel
+import jnu.kulipai.exam.ui.screens.welcome.WelcomeViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
-import kotlin.math.sign
 
 /*
 // Koin的module
@@ -34,8 +34,18 @@ val networkModule = module {
 
 // ViewModel 模块
 val viewModelModule = module {
-    viewModel { MainActivityViewModel(get(), get(),get()) }
-    viewModel { HomeViewModel(get(), get(), get(), get(),get(),get(),get()) }
+    viewModel { MainActivityViewModel(get(), get()) }
+    // Updated HomeViewModel injection
+    viewModel { 
+        HomeViewModel(
+            fileRepository = get(), 
+            settingsRepository = get(), 
+            platformService = get(), // Add this
+            downloadDataSource = get(),
+            sourceRepository = get(),
+            fileManager = get()
+        ) 
+    }
     viewModel { SettingsAppearanceViewModel(get()) }
     viewModel { WelcomeViewModel(get(),get(),get()) }
 }
@@ -57,10 +67,20 @@ val appModule = module {
     // FileManager
     single { FileManager(get()) }
 
-    // Repository
-    single { FileRepository(get(), get(), get()) }
-    single { SourceRepository(get(), get()) }
+    // Repository Implementations (Merged into classes)
+    single {
+        FileRepository(get(), get(), get())
+    }
+    single {
+        SettingsRepository(get(), get())
+    }
+    single { jnu.kulipai.exam.data.repository.SourceRepository(get(), get()) }
 
+
+    // Platform Service
+    single<PlatformService> {
+        jnu.kulipai.exam.platform.AndroidPlatformService(get()) 
+    }
 
     // 主题单例
     single { ThemeSettingsManager(get()) }
