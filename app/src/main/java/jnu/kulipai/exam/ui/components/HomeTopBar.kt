@@ -14,6 +14,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -23,8 +24,9 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -34,11 +36,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import cafe.adriel.voyager.navigator.Navigator
+import com.kyant.backdrop.Backdrop
 import jnu.kulipai.exam.R
 import jnu.kulipai.exam.data.model.LoadingState
 import jnu.kulipai.exam.data.model.MaskAnimActive
@@ -56,7 +59,7 @@ fun HomeTopBar(
     isDarkTheme: Boolean,
     isAnimating: Boolean,
     onThemeToggle: MaskAnimActive,
-    navController: Navigator
+    backdrop: Backdrop
 ) {
     val pwd = homeViewModel.currentPath.collectAsState()
     val searchText = homeViewModel.searchText.collectAsState()
@@ -158,59 +161,78 @@ fun HomeTopBar(
 
         var searchJob: Job? = null
 
-        OutlinedTextField(
-            value = searchText.value,
-            onValueChange = { newText ->
-                homeViewModel.setSearchText(newText)
-                homeViewModel.setLoadingState(LoadingState.Loading)
-//                homeViewModel.setIsSearch(false)
-
-                searchJob?.cancel()
-                searchJob = CoroutineScope(Dispatchers.Main).launch {
-                    if (newText.isNotEmpty()) {
-                        delay(300) // 延迟300ms
-//                        homeViewModel.setIsSearch(true)
-                        homeViewModel.setLoadingState(LoadingState.Loaded)
-
-                    }
-                }
-
-            },
-            placeholder = { Text("搜索") },
-            leadingIcon = {
-                Row {
-                    Spacer(Modifier.width(8.dp))
-
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = "搜索图标"
-                    )
-                }
-            },
-            trailingIcon = { // 右侧图标 (取消按钮)
-                if (searchText.value.isNotEmpty()) { // 只有当有文字时才显示
-                    Row {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "清空输入",
-                            modifier = Modifier.clickable { // 添加点击事件
-                                homeViewModel.setSearchText("")
-                                focusManager.clearFocus()
-                            }
-                        )
-                        Spacer(Modifier.width(8.dp))
-
-                    }
-                }
-            },
-            shape = RoundedCornerShape(percent = 50),
-            singleLine = true,
-
+        LiquidButton(
+            {},
+            backdrop = backdrop,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(26.dp, 8.dp)
-                .focusRequester(focusRequester)
-        )
+        ) {
+            TextField(
+                value = searchText.value,
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    disabledContainerColor = Color.Transparent,
+
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    disabledIndicatorColor = Color.Transparent,
+
+                    cursorColor = Color.White
+                ),
+
+                onValueChange = { newText ->
+                    homeViewModel.setSearchText(newText)
+                    homeViewModel.setLoadingState(LoadingState.Loading)
+//                homeViewModel.setIsSearch(false)
+
+                    searchJob?.cancel()
+                    searchJob = CoroutineScope(Dispatchers.Main).launch {
+                        if (newText.isNotEmpty()) {
+                            delay(300) // 延迟300ms
+//                        homeViewModel.setIsSearch(true)
+                            homeViewModel.setLoadingState(LoadingState.Loaded)
+
+                        }
+                    }
+
+                },
+                placeholder = { Text("搜索") },
+                leadingIcon = {
+                    Row {
+                        Spacer(Modifier.width(8.dp))
+
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "搜索图标"
+                        )
+                    }
+                },
+                trailingIcon = { // 右侧图标 (取消按钮)
+                    if (searchText.value.isNotEmpty()) { // 只有当有文字时才显示
+                        Row {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "清空输入",
+                                modifier = Modifier.clickable { // 添加点击事件
+                                    homeViewModel.setSearchText("")
+                                    focusManager.clearFocus()
+                                }
+                            )
+                            Spacer(Modifier.width(8.dp))
+
+                        }
+                    }
+                },
+                shape = RoundedCornerShape(percent = 50),
+                singleLine = true,
+
+                modifier = Modifier
+                    .fillMaxSize()
+                    .focusRequester(focusRequester)
+            )
+        }
 
 
     }

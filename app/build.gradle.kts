@@ -10,7 +10,11 @@ plugins {
 android {
     namespace = "jnu.kulipai.exam"
     // 安卓16是Baklava，没吃过，看着像切糕？
-    compileSdk = 36
+    compileSdk {
+        version = release(36) {
+            minorApiLevel = 1
+        }
+    }
 
     defaultConfig {
         applicationId = "jnu.kulipai.exam"
@@ -50,21 +54,9 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    // 喂，都过时了还不知道改吗，
-    // ...,按照ai的直接项目炸了，不碰了
-    // 改好了
-//    kotlinOptions {
-//        jvmTarget = "17"
-//        freeCompilerArgs = listOf("-XXLanguage:+PropertyParamAnnotationDefaultTargetMode")
-//    }
-    // LuaHook的成功适配新版了，这里看到了也复制过来
-    kotlin {
-        jvmToolchain(17)
-    }
+
     buildFeatures {
         compose = true
-
-        // 666,gpa 8开始默认关闭，导致我弄了半天
         buildConfig = true
     }
 }
@@ -99,16 +91,12 @@ dependencies {
     implementation(libs.bundles.compose)
 
 
-    testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
 
 
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(libs.androidx.ui.test.junit4)
+
     androidTestImplementation(libs.androidx.ui.tooling.preview)
     debugImplementation(libs.androidx.ui.tooling)
-    debugImplementation(libs.androidx.ui.test.manifest)
 
     //强大的长久存储功能
     implementation(libs.androidx.datastore.preferences)

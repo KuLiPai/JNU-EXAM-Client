@@ -173,7 +173,7 @@ fun MainScaffold(
                         isDarkTheme.value,
                         isAnimating,
                         onThemeToggle,
-                        navController
+                        backdrop
                     )
                 }
             },

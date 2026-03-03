@@ -23,8 +23,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedButton
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -51,10 +53,9 @@ import jnu.kulipai.exam.data.model.FileItem
 import jnu.kulipai.exam.ui.screens.home.HomeViewModel
 import jnu.kulipai.exam.ui.screens.home.formatFileSize
 import jnu.kulipai.exam.ui.screens.pdf.PdfScreen
-import java.io.File
 
 
-
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun FileCard(
     item: FileItem,
@@ -179,6 +180,8 @@ fun FileCard(
 
 
                                     },
+                                    shapes = ButtonDefaults.shapes(),
+
                                     contentPadding = PaddingValues(
                                         start = 16.dp,
                                         top = 6.dp,
@@ -198,6 +201,8 @@ fun FileCard(
 
                                         navController.push(PdfScreen(item.path,item.name))
                                     },
+                                    shapes = ButtonDefaults.shapes(),
+
                                     contentPadding = PaddingValues(
                                         start = 16.dp,
                                         top = 6.dp,
@@ -228,6 +233,7 @@ fun FileCard(
                                         homeViewModel.openFileWithOtherApp(item.path)
                                     }
                                 },
+                                shapes = ButtonDefaults.shapes(),
                                 contentPadding = PaddingValues(
                                     start = 16.dp,
                                     top = 6.dp,
