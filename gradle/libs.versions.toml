@@ -1,28 +1,28 @@
 [versions]
 accompanistSystemuicontroller = "0.36.0"
-agp = "8.13.2"
+agp = "9.0.1"
 composePdf = "1.2.0"
 composewaveloading = "0.1.4"
 datastorePreferences = "1.2.0"
 koinBom = "4.1.1"
-kotlin = "2.3.0"
+kotlin = "2.3.10"
 ksp = "2.3.4"
 coreKtx = "1.17.0"
 junit = "4.13.2"
 junitVersion = "1.3.0"
 espressoCore = "3.7.0"
-ktor = "3.3.3"
+ktor = "3.4.0"
 lifecycleRuntimeKtx = "2.10.0"
-activityCompose = "1.12.2"
-composeBom = "2026.01.00"
+activityCompose = "1.12.4"
+composeBom = "2026.02.01"
 lottieComposeVersion = "6.7.1"
 materialIconsExtended = "1.7.8"
-navigationCompose = "2.9.6"
-materialKolor = "4.1.0"
+navigationCompose = "2.9.7"
+materialKolor = "4.1.1"
 appcompat = "1.7.1"
 aboutLibraries = '13.2.1'
-backdrop = "1.0.4"
-capsule = "2.1.2"
+backdrop = "1.0.6"
+capsule = "2.1.3"
 voyager = "1.1.0-beta03"
 
 
@@ -50,8 +50,6 @@ androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", versi
 
 material = { group = "androidx.compose.material", name = "material" }
 
-
-#material = { group = "androidx.compose.material", name = "material" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3-android" }
 androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
 foundation-android = { group = "androidx.compose.foundation", name = "foundation-android" }
