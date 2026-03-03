@@ -309,6 +309,26 @@ class HomeViewModel(
 
                     is DirectoryResult.Success -> {
                         _root.value = result.tree
+                        if (_currentPath.value == "/") {
+                            fileManager.getDirContent(_root.value, _currentPath.value)?.let {
+                                _fileNodeData.value = it.subDirs + it.files
+                            }
+                        } else {
+                            val content = fileManager.getDirContent(_root.value, _currentPath.value)
+                            if (content != null) {
+                                _fileNodeData.value = listOf(
+                                    DirNode(
+                                        name = "..",
+                                        path = "",
+                                    )
+                                ) + content.subDirs + content.files
+                            } else {
+                                _currentPath.value = "/"
+                                fileManager.getDirContent(_root.value, _currentPath.value)?.let {
+                                    _fileNodeData.value = it.subDirs + it.files
+                                }
+                            }
+                        }
                         _loadingState.value = LoadingState.Loaded
                         settingsRepository.setDay(System.currentTimeMillis())
                     }
