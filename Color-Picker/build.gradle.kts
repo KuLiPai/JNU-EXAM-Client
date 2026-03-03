@@ -5,7 +5,12 @@ plugins {
 
 android {
     namespace = "com.kaajjo.color_picker"
-    compileSdk = 36
+    compileSdk {
+        version = release(36) {
+            minorApiLevel = 1
+        }
+    }
+
 
     defaultConfig {
         minSdk = 26
