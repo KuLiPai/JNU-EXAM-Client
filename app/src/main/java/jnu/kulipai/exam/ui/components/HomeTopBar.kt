@@ -178,8 +178,6 @@ fun HomeTopBar(
                     focusedIndicatorColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent,
                     disabledIndicatorColor = Color.Transparent,
-
-                    cursorColor = Color.White
                 ),
 
                 onValueChange = { newText ->
