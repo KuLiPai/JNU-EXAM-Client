@@ -6,6 +6,7 @@ import jnu.kulipai.exam.core.common.d
 import jnu.kulipai.exam.core.file.FileManager
 import jnu.kulipai.exam.core.file.PathUtil
 import jnu.kulipai.exam.core.network.DownloadDataSource
+import jnu.kulipai.exam.data.constants.ApiConfig
 import jnu.kulipai.exam.data.model.ChangeSourceEvent
 import jnu.kulipai.exam.data.model.DirNode
 import jnu.kulipai.exam.data.model.DirectoryResult
@@ -100,7 +101,7 @@ class HomeViewModel(
 
     fun resetSourceToDefault() {
         changeSourceInternal(
-            sourceUrl = "https://www.gubaiovo.com/jnu-exam/source_list.json",
+            sourceUrl = ApiConfig.SOURCE_URL,
             toastOnSuccess = "已恢复默认"
         )
     }

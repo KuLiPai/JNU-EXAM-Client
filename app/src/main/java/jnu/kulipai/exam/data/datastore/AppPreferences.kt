@@ -13,6 +13,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jnu.kulipai.exam.core.common.d
+import jnu.kulipai.exam.data.constants.ApiConfig
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
@@ -98,7 +99,7 @@ class AppPreferences(
 
     val sourceUrl: Flow<String> = dataStore.data.map {
         it[sourceUrlKey]
-            ?: "https://www.gubaiovo.com/jnu-exam/source_list.json"
+            ?: ApiConfig.SOURCE_URL
     }
 
     /* ===================== Day ===================== */

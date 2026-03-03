@@ -2,6 +2,7 @@ package jnu.kulipai.exam.ui.screens.welcome
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import jnu.kulipai.exam.data.constants.ApiConfig
 import jnu.kulipai.exam.data.repository.SettingsRepository
 import jnu.kulipai.exam.data.repository.SourceRepository
 import jnu.kulipai.exam.platform.PlatformService
@@ -64,7 +65,7 @@ class WelcomeViewModel(
     val data: StateFlow<String?> = _data
 
     // 模拟加载
-    fun getSourceJson(url: String = "https://www.gubaiovo.com/jnu-exam/source_list.json") {
+    fun getSourceJson(url: String = ApiConfig.SOURCE_URL) {
 
 
         viewModelScope.launch {
