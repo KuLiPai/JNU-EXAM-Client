@@ -30,8 +30,12 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -159,7 +163,8 @@ fun HomeTopBar(
             )
         }
 
-        var searchJob: Job? = null
+        val scope = rememberCoroutineScope()
+        var searchJob by remember { mutableStateOf<Job?>(null) }
 
         LiquidButton(
             {},
@@ -183,18 +188,12 @@ fun HomeTopBar(
                 onValueChange = { newText ->
                     homeViewModel.setSearchText(newText)
                     homeViewModel.setLoadingState(LoadingState.Loading)
-//                homeViewModel.setIsSearch(false)
 
                     searchJob?.cancel()
-                    searchJob = CoroutineScope(Dispatchers.Main).launch {
-                        if (newText.isNotEmpty()) {
-                            delay(300) // 延迟300ms
-//                        homeViewModel.setIsSearch(true)
-                            homeViewModel.setLoadingState(LoadingState.Loaded)
-
-                        }
+                    searchJob = scope.launch {
+                        delay(300) // 延迟300ms
+                        homeViewModel.setLoadingState(LoadingState.Loaded)
                     }
-
                 },
                 placeholder = { Text("搜索") },
                 leadingIcon = {
@@ -215,6 +214,8 @@ fun HomeTopBar(
                                 contentDescription = "清空输入",
                                 modifier = Modifier.clickable { // 添加点击事件
                                     homeViewModel.setSearchText("")
+                                    searchJob?.cancel()
+                                    homeViewModel.setLoadingState(LoadingState.Loaded)
                                     focusManager.clearFocus()
                                 }
                             )
