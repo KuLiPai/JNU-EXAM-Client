@@ -61,7 +61,6 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastSumBy
@@ -261,7 +260,7 @@ private val Thickness = 4.dp
 private val FadeOutAnimationSpec =
     tween<Float>(durationMillis = ViewConfiguration.getScrollBarFadeDuration())
 
-@Preview(widthDp = 400, heightDp = 400, showBackground = true)
+
 @Composable
 internal fun ScrollbarPreview() {
     val state = rememberScrollState()
@@ -281,7 +280,7 @@ internal fun ScrollbarPreview() {
     }
 }
 
-@Preview(widthDp = 400, heightDp = 400, showBackground = true)
+
 @Composable
 internal fun LazyListScrollbarPreview() {
     val state = rememberLazyListState()
@@ -300,7 +299,7 @@ internal fun LazyListScrollbarPreview() {
     }
 }
 
-@Preview(widthDp = 400, showBackground = true)
+
 @Composable
 internal fun HorizontalScrollbarPreview() {
     val state = rememberScrollState()
@@ -319,7 +318,6 @@ internal fun HorizontalScrollbarPreview() {
     }
 }
 
-@Preview(widthDp = 400, showBackground = true)
 @Composable
 internal fun LazyListHorizontalScrollbarPreview() {
     val state = rememberLazyListState()

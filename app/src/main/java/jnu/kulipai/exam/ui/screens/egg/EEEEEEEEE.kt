@@ -32,7 +32,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
@@ -248,7 +247,6 @@ private fun generatePackedEmojis(
 }
 
 
-@Preview(showBackground = true)
 @Composable
 fun PreviewEmojiEasterEgg() {
     MaterialTheme {
