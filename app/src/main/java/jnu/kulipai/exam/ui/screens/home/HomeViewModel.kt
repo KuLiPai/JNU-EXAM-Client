@@ -265,6 +265,20 @@ class HomeViewModel(
                 _loadingState.value = LoadingState.Step
                 delay(250)
                 _currentPath.value = PathUtil.dotDot(_currentPath.value)
+                if (_currentPath.value == "/") {
+                    fileManager.getDirContent(_root.value, _currentPath.value)?.let {
+                        _fileNodeData.value = it.subDirs + it.files
+                    }
+                } else {
+                    fileManager.getDirContent(_root.value, _currentPath.value)?.let {
+                        _fileNodeData.value = listOf(
+                            DirNode(
+                                name = "..",
+                                path = "",
+                            )
+                        ) + it.subDirs + it.files
+                    }
+                }
                 _loadingState.value = LoadingState.Loaded
             }
         } else {
@@ -273,6 +287,7 @@ class HomeViewModel(
 //            Toast.makeText(application, "已经在根目录啦", Toast.LENGTH_SHORT).show()
         }
     }
+
 
     fun updateRepositoryData(callBack: () -> Unit = {}) {
         viewModelScope.launch {
